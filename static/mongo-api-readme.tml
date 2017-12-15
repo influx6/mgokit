@@ -1,0 +1,44 @@
+{{.Struct.Object.Name}} MongoDB API
+===================================
+
+{{.Struct.Object.Name}} MongoDB API is a auto-generated CRUD implementation for the `{{.Struct.Object.Name.Name}}` in package `{{.Pkg.Path}}`.
+
+The following method exists for custom operations:
+
+## Exec
+
+```
+Exec(ctx context.Context, fx func(col *mgo.Collection) error) error
+```
+
+The following methods exists in the generated API as pertaining to CRUD:
+
+## Create
+
+```go
+Create(ctx context.Context, elem {{.Struct.Package}}.{{.Struct.Object.Name}}) error
+```
+
+## Get
+
+```go
+Get(ctx context.Context, publicID string) ({{.Struct.Package}}.{{.Struct.Object.Name}}, error)
+```
+
+## Get All
+
+```go
+GetAll(ctx context.Context) ([]{{.Struct.Package}}.{{.Struct.Object.Name}}, error)
+```
+
+## Update
+
+```go
+Update(ctx context.Context, publicID string, elem {{.Struct.Package}}.{{.Struct.Object.Name}}) error
+```
+
+## Delete
+
+```
+Delete(ctx context.Context, publicID string) error
+```

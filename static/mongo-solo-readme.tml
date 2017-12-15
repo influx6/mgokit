@@ -1,0 +1,21 @@
+MongoDB Implementation
+===============================
+
+MongoDB Implementation is a code generation package that provides a basic implementation
+for interacting with a underine mongodb database.
+
+Following methods are implemented:
+
+## WithIndex
+
+```go
+WithIndex(ctx context.Context, col string, indexes ...mgo.Index) error) error
+```
+
+## Exec
+
+```go
+Exec(ctx context.Context, col string, fx func(col *mgo.Collection) error) error
+```
+
+

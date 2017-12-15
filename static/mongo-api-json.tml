@@ -1,0 +1,16 @@
+var {{lower .Struct.Object.Name.Name}}JSON = `{{ mapJSON .Struct "bson" "json" }}`
+
+var {{lower .Struct.Object.Name.Name}}CreateJSON = `{{ mapJSON .CreateAction "bson" "json" }}`
+
+var {{lower .Struct.Object.Name.Name}}UpdateJSON = `{{ mapJSON .UpdateAction "bson" "json" }}`
+
+// loadJSONFor returns a new instance of a {{.Struct.Package}}.{{.Struct.Object.Name}} from the provide json content.
+func loadJSONFor(content string) ({{.Struct.Package}}.{{.Struct.Object.Name}}, error) {
+	var elem {{.Struct.Package}}.{{.Struct.Object.Name}}
+
+	if err := json.Unmarshal([]byte(content), &elem); err != nil {
+		return {{.Struct.Package}}.{{.Struct.Object.Name}}{}, err
+	}
+
+	return elem, nil
+}

@@ -1,0 +1,178 @@
+var (
+    events = metrics.New(custom.StackDisplay(os.Stdout))
+
+    config = mongo.Config{
+        Mode: mgo.Monotonic,
+        DB: os.Getenv("{{.Struct.Package}}_MONGO_DB"),
+        Host: os.Getenv("{{.Struct.Package}}_MONGO_HOST"),
+        User: os.Getenv("{{.Struct.Package}}_MONGO_USER"),
+        AuthDB: os.Getenv("{{.Struct.Package}}_MONGO_AUTHDB"),
+        Password: os.Getenv("{{.Struct.Package}}_MONGO_PASSWORD"),
+    }
+
+    testCol = "{{lower .Struct.Object.Name.Name}}_test_collection"
+)
+
+// TestGet{{.Struct.Object.Name}} validates the retrieval of a {{.Struct.Object.Name}}
+// record from a mongodb.
+func TestGet{{.Struct.Object.Name}}(t *testing.T){
+    api := mdb.New(testCol, events, mongo.New(config))
+
+    ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
+
+    elem, err := loadJSONFor({{lower .Struct.Object.Name.Name}}CreateJSON)
+    if err != nil {
+        tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
+    }
+    tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
+
+    defer api.Delete(ctx, elem.PublicID)
+
+    if err := api.Create(ctx, elem); err != nil {
+        tests.Failed("Successfully added record for {{.Struct.Object.Name}} into db: %+q.", err)
+    }
+    tests.Passed("Successfully added record for {{.Struct.Object.Name}} into db.")
+
+    _, err = api.Get(ctx, elem.PublicID)
+    if err != nil {
+        tests.Failed("Successfully retrieved stored record for {{.Struct.Object.Name}} from db: %+q.", err)
+    }
+    tests.Passed("Successfully retrieved stored record for {{.Struct.Object.Name}} from db.")
+}
+
+// TestGetAll{{.Struct.Object.Name}} validates the retrieval of all {{.Struct.Object.Name}}
+// record from a mongodb.
+func TestGetAll{{.Struct.Object.Name}}(t *testing.T){
+    api := mdb.New(testCol, events, mongo.New(config))
+
+    ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
+
+    elem, err := loadJSONFor({{lower .Struct.Object.Name.Name}}CreateJSON)
+    if err != nil {
+        tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
+    }
+    tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
+
+    defer api.Delete(ctx, elem.PublicID)
+
+    if err := api.Create(ctx, elem); err != nil {
+        tests.Failed("Successfully added record for {{.Struct.Object.Name}} into db: %+q.", err)
+    }
+    tests.Passed("Successfully added record for {{.Struct.Object.Name}} into db.")
+
+    records, _, err := api.GetAllPerPage(ctx, "asc", "public_id", -1, -1)
+    if err != nil {
+        tests.Failed("Successfully retrieved all records for {{.Struct.Object.Name}} from db: %+q.", err)
+    }
+    tests.Passed("Successfully retrieved all records for {{.Struct.Object.Name}} from db.")
+
+    if len(records) == 0 {
+        tests.Failed("Successfully retrieved atleast 1 record for {{.Struct.Object.Name}} from db.")
+    }
+    tests.Passed("Successfully retrieved atleast 1 record for {{.Struct.Object.Name}} from db.")
+}
+
+// TestGetAll{{.Struct.Object.Name}}OrderBy validates the retrieval of all {{.Struct.Object.Name}}
+// record from a mongodb.
+func TestGetAll{{.Struct.Object.Name}}ByOrder(t *testing.T){
+    api := mdb.New(testCol, events, mongo.New(config))
+
+    ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
+
+    elem, err := loadJSONFor({{lower .Struct.Object.Name.Name}}CreateJSON)
+    if err != nil {
+        tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
+    }
+    tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
+
+    defer api.Delete(ctx, elem.PublicID)
+
+    if err := api.Create(ctx, elem); err != nil {
+        tests.Failed("Successfully added record for {{.Struct.Object.Name}} into db: %+q.", err)
+    }
+    tests.Passed("Successfully added record for {{.Struct.Object.Name}} into db.")
+
+    records, err := api.GetAllByOrder(ctx, "asc", "public_id")
+    if err != nil {
+        tests.Failed("Successfully retrieved all records for {{.Struct.Object.Name}} from db: %+q.", err)
+    }
+    tests.Passed("Successfully retrieved all records for {{.Struct.Object.Name}} from db.")
+
+    if len(records) == 0 {
+        tests.Failed("Successfully retrieved atleast 1 record for {{.Struct.Object.Name}} from db.")
+    }
+    tests.Passed("Successfully retrieved atleast 1 record for {{.Struct.Object.Name}} from db.")
+}
+
+// Test{{.Struct.Object.Name}}Create validates the creation of a {{.Struct.Object.Name}}
+// record with a mongodb.
+func Test{{.Struct.Object.Name}}Create(t *testing.T){
+    api := mdb.New(testCol, events, mongo.New(config))
+
+    ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
+
+    elem, err := loadJSONFor({{lower .Struct.Object.Name.Name}}CreateJSON)
+    if err != nil {
+        tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
+    }
+    tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
+
+    defer api.Delete(ctx, elem.PublicID)
+
+    if err := api.Create(ctx, elem); err != nil {
+        tests.Failed("Successfully added record for {{.Struct.Object.Name}} into db: %+q.", err)
+    }
+    tests.Passed("Successfully added record for {{.Struct.Object.Name}} into db.")
+}
+
+// Test{{.Struct.Object.Name}}Update validates the update of a {{.Struct.Object.Name}}
+// record with a mongodb.
+func Test{{.Struct.Object.Name}}Update(t *testing.T){
+    api := mdb.New(testCol, events, mongo.New(config))
+
+    ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
+
+    elem, err := loadJSONFor({{lower .Struct.Object.Name.Name}}CreateJSON)
+    if err != nil {
+        tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
+    }
+    tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
+
+    defer api.Delete(ctx, elem.PublicID)
+
+    if err := api.Create(ctx, elem); err != nil {
+        tests.Failed("Successfully added record for {{.Struct.Object.Name}} into db: %+q.", err)
+    }
+    tests.Passed("Successfully added record for {{.Struct.Object.Name}} into db.")
+
+    //TODO: Update something.
+
+    if err := api.Update(ctx, elem.PublicID, elem); err != nil {
+        tests.Failed("Successfully updated record for {{.Struct.Object.Name}} into db: %+q.", err)
+    }
+    tests.Passed("Successfully updated record for {{.Struct.Object.Name}} into db.")
+}
+
+// Test{{.Struct.Object.Name}}Delete validates the removal of a {{.Struct.Object.Name}}
+// record from a mongodb.
+func Test{{.Struct.Object.Name}}Delete(t *testing.T){
+    api := mdb.New(testCol, events, mongo.New(config))
+
+    ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
+
+    elem, err := loadJSONFor({{lower .Struct.Object.Name.Name}}CreateJSON)
+    if err != nil {
+        tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
+    }
+    tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
+
+    if err := api.Create(ctx, elem); err != nil {
+        tests.Failed("Successfully added record for {{.Struct.Object.Name}} into db: %+q.", err)
+    }
+    tests.Passed("Successfully added record for {{.Struct.Object.Name}} into db.")
+
+    if err := api.Delete(ctx, elem.PublicID); err != nil {
+        tests.Failed("Successfully removed record for {{.Struct.Object.Name}} into db: %+q.", err)
+    }
+    tests.Passed("Successfully removed record for {{.Struct.Object.Name}} into db.")
+}
