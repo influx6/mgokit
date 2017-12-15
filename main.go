@@ -13,10 +13,6 @@ import (
 	"github.com/influx6/moz/ast"
 )
 
-var (
-	logs = metrics.New(custom.StackDisplay(os.Stderr))
-)
-
 func main() {
 	flags.Run("mgokit", flags.Command{
 		Name:      "generate",
@@ -25,6 +21,13 @@ func main() {
 		Action: func(ctx context.Context) error {
 			force, _ := ctx.Bag().GetBool("force")
 			dest, _ := ctx.Bag().GetString("dest")
+			verbose, _ := ctx.Bag().GetBool("verbose")
+
+			logs := metrics.New()
+
+			if verbose {
+				logs = metrics.New(custom.StackDisplay(os.Stderr))
+			}
 
 			currentdir, err := os.Getwd()
 			if err != nil {
@@ -40,9 +43,13 @@ func main() {
 				return err
 			}
 
-			return ast.Parse(dest, logs, generators, force, res...)
+			return ast.SimplyParse(dest, logs, generators, force, res...)
 		},
 		Flags: []flags.Flag{
+			&flags.BoolFlag{
+				Name: "verbose",
+				Desc: "verbose logs all operations out to console.",
+			},
 			&flags.BoolFlag{
 				Name: "force",
 				Desc: "force regeneration of packages annotation directives.",
