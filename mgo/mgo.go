@@ -7,7 +7,6 @@ import (
 	"text/template"
 
 	"github.com/gokit/mgokit/static"
-	"github.com/influx6/faux/fmtwriter"
 	"github.com/influx6/moz/ast"
 	"github.com/influx6/moz/gen"
 )

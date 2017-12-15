@@ -4,6 +4,12 @@ type {{.Struct.Object.Name}}Fields  interface {
 	Fields() map[string]interface{}
 }
 
+// {{.Struct.Object.Name}}Consumer defines an interface which accepts a map of data which will be consumed
+// into the giving implementing structure as decided by the structure.
+type {{.Struct.Object.Name}}Consumer interface {
+	Consume(map[string]interface{}) error
+}
+
 // {{.Struct.Object.Name}}BSON defines an interface which exposes method to return a bson.M type
 // which contains all related fields for the giving  object.
 type {{.Struct.Object.Name}}BSON interface {
@@ -14,12 +20,6 @@ type {{.Struct.Object.Name}}BSON interface {
 // into the giving implementing structure as decided by the structure.
 type {{.Struct.Object.Name}}BSONConsumer interface {
 	BSONConsume(bson.M) error
-}
-
-// {{.Struct.Object.Name}}Consumer defines an interface which accepts a map of data which will be consumed
-// into the giving implementing structure as decided by the structure.
-type {{.Struct.Object.Name}}Consumer interface {
-	Consume(map[string]interface{}) error
 }
 
 // Mongod defines a interface which exposes a method for retrieving a
