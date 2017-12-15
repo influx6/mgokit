@@ -31,7 +31,7 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 		}
 	}
 
-	packageName := fmt.Sprintf("%sdb", strings.ToLower(str.Object.Name.Name))
+	packageName := fmt.Sprintf("%smgo", strings.ToLower(str.Object.Name.Name))
 
 	mongoTestGen := gen.Block(
 		gen.Package(
@@ -133,7 +133,7 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 
 	mongoGen := gen.Block(
 		gen.Commentary(
-			gen.SourceText(`Package mdb provides a auto-generated package which contains a mongo CRUD API for the specific {{.Object.Name}} struct in package {{.Package}}.`, str),
+			gen.SourceText(`Package `+packageName+` provides a auto-generated package which contains a sql CRUD API for the specific {{.Object.Name}} struct in package {{.Package}}.`, str),
 		),
 		gen.Package(
 			gen.Name(packageName),

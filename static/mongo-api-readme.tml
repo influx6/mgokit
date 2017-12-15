@@ -7,7 +7,7 @@ The following method exists for custom operations:
 
 ## Exec
 
-```
+```go
 Exec(ctx context.Context, fx func(col *mgo.Collection) error) error
 ```
 
@@ -39,6 +39,6 @@ Update(ctx context.Context, publicID string, elem {{.Struct.Package}}.{{.Struct.
 
 ## Delete
 
-```
+```go
 Delete(ctx context.Context, publicID string) error
 ```
