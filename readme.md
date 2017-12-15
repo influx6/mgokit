@@ -35,18 +35,11 @@ package box
 
 You annotate any giving struct with `@mongoapi` which marks giving struct has a target for code generation. 
 
-It also respects `@associates` annotation which gives extra information to the generator for the following data:
-
-1. What struct to be used as representing a new struct type.
-2. What struct contain information for representing the updated struct type.
-
 Sample below:
 
 ```go
 // User is a type defining the given user related fields for a given.
 // @mongoapi
-//@associates(@mongoapi, New, NewUser)
-//@associates(@mongoapi, Update, UpdatedUser)
 type User struct {
 	Username      string    `json:"username"`
 	PublicID      string    `json:"public_id"`
@@ -62,22 +55,24 @@ Mgokit expects structs to match specific interfaces, which allows it to function
 
 Each interface is included with all generated files.
 
-Sample Interface for `User` struct:
+Sample interfaces to be implemented for `User` struct (only one set is needed):
 
 ```go
 type UserFields  interface {
 	Fields() map[string]interface{}
 }
 
-type UserBSON interface {
-	BSON() bson.M
+type UserConsumer interface {
+	Consume(map[string]interface{}) error
 }
+```
 
+```go
 type UserBSONConsumer interface {
 	BSONConsume(bson.M) error
 }
 
-type UserConsumer interface {
-	Consume(map[string]interface{}) error
+type UserBSON interface {
+	BSON() bson.M
 }
 ```
