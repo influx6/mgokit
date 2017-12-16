@@ -1,5 +1,7 @@
 MgoKit
 --------
+[![Go Report Card](https://goreportcard.com/badge/github.com/gokit/mgokit)](https://goreportcard.com/report/github.com/gokit/mgokit)
+
 Mgokit implements a code generator which automatically generates go packages for mongodb implementations for annotated structs.
 
 ## Install
