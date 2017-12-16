@@ -17,17 +17,15 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 	updateAction := str
 	createAction := str
 
-	if len(str.Associations) != 0 {
-		if newAction, ok := str.Associations["New"]; ok {
-			if action, err := ast.FindStructType(pkgDeclr, newAction.TypeName); err == nil && action.Declr != nil {
-				createAction = action
-			}
+	if newActionName := an.Param("New"); newActionName != "" {
+		if action, err := ast.FindStructType(pkgDeclr, newActionName); err == nil && action.Declr != nil {
+			createAction = action
 		}
+	}
 
-		if upAction, ok := str.Associations["Update"]; ok {
-			if action, err := ast.FindStructType(pkgDeclr, upAction.TypeName); err == nil && action.Declr != nil {
-				updateAction = action
-			}
+	if updateActionName := an.Param("Update"); updateActionName != "" {
+		if action, err := ast.FindStructType(pkgDeclr, updateActionName); err == nil && action.Declr != nil {
+			updateAction = action
 		}
 	}
 
