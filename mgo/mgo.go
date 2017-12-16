@@ -38,10 +38,9 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 			gen.Name(fmt.Sprintf("%s_test", packageName)),
 			gen.Imports(
 				gen.Import("os", ""),
+				gen.Import("time", ""),
 				gen.Import("testing", ""),
-				gen.Import("encoding/json", ""),
 				gen.Import("gopkg.in/mgo.v2", "mgo"),
-				gen.Import("gopkg.in/mgo.v2/bson", ""),
 				gen.Import("github.com/influx6/faux/tests", ""),
 				gen.Import("github.com/influx6/faux/metrics", ""),
 				gen.Import("github.com/influx6/faux/context", ""),
@@ -138,7 +137,8 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 		gen.Package(
 			gen.Name(packageName),
 			gen.Imports(
-				gen.Import("encoding/json", ""),
+				gen.Import("fmt", ""),
+				gen.Import("strings", ""),
 				gen.Import("gopkg.in/mgo.v2", "mgo"),
 				gen.Import("gopkg.in/mgo.v2/bson", ""),
 				gen.Import("github.com/influx6/faux/context", ""),

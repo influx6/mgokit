@@ -269,7 +269,7 @@ func (a *AnnotationRegistry) ParseDeclr(pkg Package, declr PackageDeclaration, t
 			}
 
 			a.metrics.Emit(metrics.Info("Directive Generation: Success"),
-				metrics.With("Level", "Struct"),
+				metrics.With("Level", "Interface"),
 				metrics.With("Directive", len(drs)),
 				metrics.With("Annotaton", annotation.Name),
 				metrics.With("nterface", inter.Object.Name.Name),

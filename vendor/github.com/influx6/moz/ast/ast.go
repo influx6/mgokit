@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/icrowley/fake"
 	"github.com/influx6/faux/metrics"
@@ -1336,21 +1337,25 @@ func GetFunctionDefinitionFromField(method *ast.Field, pkg *PackageDeclaration) 
 
 	var arguments, returns []ArgType
 
-	for _, result := range ftype.Results.List {
-		arg, err := GetArgTypeFromField("ret", pkg.File, result, pkg)
-		if err != nil {
-			return FunctionDefinition{}, err
-		}
+	if ftype.Results != nil {
+		for _, result := range ftype.Results.List {
+			arg, err := GetArgTypeFromField("ret", pkg.File, result, pkg)
+			if err != nil {
+				return FunctionDefinition{}, err
+			}
 
-		returns = append(returns, arg)
+			returns = append(returns, arg)
+		}
 	}
 
-	for _, param := range ftype.Params.List {
-		arg, err := GetArgTypeFromField("var", pkg.File, param, pkg)
-		if err != nil {
-			return FunctionDefinition{}, err
+	if ftype.Params != nil {
+		for _, param := range ftype.Params.List {
+			arg, err := GetArgTypeFromField("var", pkg.File, param, pkg)
+			if err != nil {
+				return FunctionDefinition{}, err
+			}
+			arguments = append(arguments, arg)
 		}
-		arguments = append(arguments, arg)
 	}
 
 	return FunctionDefinition{
@@ -2074,6 +2079,8 @@ func DefaultFieldValue(fld FieldDeclaration) string {
 // typeName.
 func RandomDataTypeValue(typeName string) string {
 	switch typeName {
+	case "time.Time":
+		return time.Now().UTC().String()
 	case "uint", "uint32", "uint64":
 		return fmt.Sprintf("%d", rand.Uint64())
 	case "bool":
@@ -2101,6 +2108,8 @@ func DefaultTypeValueString(typeName string) string {
 		return "0"
 	case "bool":
 		return `false`
+	case "time.Time", "*time.Time", "Time", "time.time":
+		return strconv.Quote(time.Now().UTC().String())
 	case "string":
 		return `""`
 	case "rune":
@@ -2284,6 +2293,10 @@ func (t TagDeclaration) Has(item string) bool {
 // ToValueString returns the string representation of a basic go core datatype.
 func ToValueString(val interface{}) string {
 	switch bo := val.(type) {
+	case *time.Time:
+		return bo.UTC().String()
+	case time.Time:
+		return bo.UTC().String()
 	case string:
 		return strconv.Quote(bo)
 	case int:

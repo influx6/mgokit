@@ -939,7 +939,6 @@ func WriteDirective(log metrics.Metrics, toDir string, doFileOverwrite bool, ite
 	log.Emit(metrics.Info("Resolved WriteDirective"),
 		metrics.With("op", "writefile"),
 		metrics.With("action", events.FileCreated{
-			Error:   err,
 			Written: written,
 			Action: actions.CreateFile{
 				RootDir:  toDir,
@@ -979,7 +978,7 @@ func ParsePackage(toDir string, log metrics.Metrics, provider *AnnotationRegistr
 
 		for _, wd := range wdrs {
 			if err := WriteDirective(log, toDir, doFileOverwrite, wd.WriteDirective); err != nil {
-				log.Emit(metrics.Info("Annotation Resolved"), metrics.With("annotation", wd.Annotation),
+				log.Emit(metrics.Error(err), metrics.With("annotation", wd.Annotation),
 					metrics.With("dir", toDir),
 					metrics.With("package", pkg.Package),
 					metrics.With("file", pkg.File))
@@ -1020,7 +1019,7 @@ func SimplyParsePackage(toDir string, log metrics.Metrics, provider *AnnotationR
 
 		for _, wd := range wdrs {
 			if err := SimpleWriteDirective(toDir, doFileOverwrite, wd.WriteDirective); err != nil {
-				log.Emit(metrics.Info("Annotation Resolved"), metrics.With("annotation", wd.Annotation),
+				log.Emit(metrics.Error(err), metrics.With("annotation", wd.Annotation),
 					metrics.With("dir", toDir),
 					metrics.With("package", pkg.Package),
 					metrics.With("file", pkg.File))
