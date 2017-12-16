@@ -1,25 +1,13 @@
 // {{.Struct.Object.Name}}Fields defines an interface which exposes method to return a map of all
 // attributes associated with the defined structure as decided by the structure.
 type {{.Struct.Object.Name}}Fields  interface {
-	Fields() map[string]interface{}
+	Fields() (map[string]interface{}, error)
 }
 
 // {{.Struct.Object.Name}}Consumer defines an interface which accepts a map of data which will be consumed
 // into the giving implementing structure as decided by the structure.
 type {{.Struct.Object.Name}}Consumer interface {
 	Consume(map[string]interface{}) error
-}
-
-// {{.Struct.Object.Name}}BSON defines an interface which exposes method to return a bson.M type
-// which contains all related fields for the giving  object.
-type {{.Struct.Object.Name}}BSON interface {
-	BSON() bson.M
-}
-
-// {{.Struct.Object.Name}}BSONConsumer defines an interface which accepts a map of data which will be consumed
-// into the giving implementing structure as decided by the structure.
-type {{.Struct.Object.Name}}BSONConsumer interface {
-	BSONConsume(bson.M) error
 }
 
 // Mongod defines a interface which exposes a method for retrieving a
@@ -224,19 +212,19 @@ func (mdb *{{.Struct.Object.Name}}DB) Create(ctx context.Context, elem {{.Struct
         return err
     }
 
-    if fields, ok := interface{}(elem).({{.Struct.Object.Name}}BSON); ok {
-        if err := database.C(mdb.col).Insert(fields.BSON()); err != nil {
-            mdb.metrics.Emit(metrics.Errorf("Failed to create {{.Struct.Object.Name}} record"),metrics.With("collection", mdb.col),metrics.With("elem", elem),metrics.With("error", err.Error()))
+    if fielder, ok := interface{}(elem).({{.Struct.Object.Name}}Fields); ok {
+        fields, err := fielder.Fields()
+        if err != nil {
+            mdb.metrics.Emit(
+                metrics.Errorf("Failed to get Fields() for {{.Struct.Object.Name}} record"),
+                metrics.With("collection", mdb.col),
+                metrics.With("elem", elem),
+                metrics.With("error", err.Error()),
+            )
             return err
         }
 
-        mdb.metrics.Emit(metrics.Info("Create record"),metrics.With("collection", mdb.col),metrics.With("elem", elem))
-
-        return nil
-    }
-
-    if fields, ok := interface{}(elem).({{.Struct.Object.Name}}Fields); ok {
-        if err := database.C(mdb.col).Insert(bson.M(fields.Fields())); err != nil {
+        if err := database.C(mdb.col).Insert(bson.M(fields)); err != nil {
             mdb.metrics.Emit(metrics.Errorf("Failed to create {{.Struct.Object.Name}} record"),metrics.With("collection", mdb.col),metrics.With("elem", elem),metrics.With("error", err.Error()))
             return err
         }
@@ -338,7 +326,6 @@ func (mdb *{{.Struct.Object.Name}}DB) GetAllPerPage(ctx context.Context, order s
     query := bson.M{}
 
     {{ if ( hasFunc .Struct "Consume"  ) }}
-
         var items []map[string]interface{}
 
         if err := database.C(mdb.col).Find(query).Skip(indexToStart).Limit(totalWanted).Sort(orderBy).All(&items); err != nil {
@@ -354,31 +341,6 @@ func (mdb *{{.Struct.Object.Name}}DB) GetAllPerPage(ctx context.Context, order s
 
             if err := elem.Consume(item); err != nil {
                 return nil, err
-            }
-
-            ritems = append(ritems, elem)
-        }
-
-        return ritems, nil
-    {{ else if ( hasFunc .Struct "BSONConsume"  ) }}
-        var items []bson.M
-
-        if err := database.C(mdb.col).Find(query).Skip(indexToStart).Limit(totalWanted).Sort(orderBy).All(&items); err != nil {
-            mdb.metrics.Emit(metrics.Errorf("Failed to retrieve all records of {{.Struct.Object.Name}} type from db"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("error", err.Error()))
-
-            return nil, -1, err
-        }
-
-        var ritems []{{.Struct.Package}}.{{.Struct.Object.Name}}
-
-        for _, item := range items {
-            var elem {{.Struct.Package}}.{{.Struct.Object.Name}}
-
-            if err := elem.BSONConsume(item); err != nil {
-
-                mdb.metrics.Emit(metrics.Errorf("Failed to consume records into struct"),metrics.With("collection", mdb.col),metrics.With("data", item),metrics.With("query", query),metrics.With("error", err.Error()))
-
-                return nil, -1, err
             }
 
             ritems = append(ritems, elem)
@@ -462,31 +424,6 @@ func (mdb *{{.Struct.Object.Name}}DB) GetAllByOrder(ctx context.Context, order, 
         }
 
         return ritems, nil
-    {{ else if ( hasFunc .Struct "BSONConsume"  ) }}
-        var items []bson.M
-
-        if err := database.C(mdb.col).Find(query).Sort(orderBy).All(&items); err != nil {
-            mdb.metrics.Emit(metrics.Errorf("Failed to retrieve all records of {{.Struct.Object.Name}} type from db"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("error", err.Error()))
-
-            return nil, err
-        }
-
-        var ritems []{{.Struct.Package}}.{{.Struct.Object.Name}}
-
-        for _, item := range items {
-            var elem {{.Struct.Package}}.{{.Struct.Object.Name}}
-
-            if err := elem.BSONConsume(item); err != nil {
-
-                mdb.metrics.Emit(metrics.Errorf("Failed to consume records into struct"),metrics.With("collection", mdb.col),metrics.With("data", item),metrics.With("query", query),metrics.With("error", err.Error()))
-
-                return nil, err
-            }
-
-            ritems = append(ritems, elem)
-        }
-
-        return ritems, nil
     {{ else }}
         var items []{{.Struct.Package}}.{{.Struct.Object.Name}}
 
@@ -555,23 +492,6 @@ func (mdb *{{.Struct.Object.Name}}DB) GetByField(ctx context.Context, key string
         }
 
         return elem, nil
-
-    {{ else if ( hasFunc .Struct "BSONConsume"  ) }}
-        var itemBSON bson.M
-
-        if err := database.C(mdb.col).Find(query).One(&itemBSON); err != nil {
-            mdb.metrics.Emit(metrics.Errorf("Failed to retrieve all records of {{.Struct.Object.Name}} type from db"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("error", err.Error()))
-
-            return {{.Struct.Package}}.{{.Struct.Object.Name}}{}, err
-        }
-
-        var item {{.Struct.Package}}.{{.Struct.Object.Name}}
-
-        if err := elem.BSONConsume(itemBSON); err != nil {
-            return {{.Struct.Package}}.{{.Struct.Object.Name}}{}, err
-        }
-
-        return item, nil
     {{ else }}
 
         var item {{.Struct.Package}}.{{.Struct.Object.Name}}
@@ -635,23 +555,6 @@ func (mdb *{{.Struct.Object.Name}}DB) Get(ctx context.Context, publicID string) 
         }
 
         return elem, nil
-
-    {{ else if ( hasFunc .Struct "BSONConsume"  ) }}
-        var itemBSON bson.M
-
-        if err := database.C(mdb.col).Find(query).One(&itemBSON); err != nil {
-            mdb.metrics.Emit(metrics.Errorf("Failed to retrieve all records of {{.Struct.Object.Name}} type from db"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("error", err.Error()))
-
-            return {{.Struct.Package}}.{{.Struct.Object.Name}}{}, err
-        }
-
-        var item {{.Struct.Package}}.{{.Struct.Object.Name}}
-
-        if err := elem.BSONConsume(itemBSON); err != nil {
-            return {{.Struct.Package}}.{{.Struct.Object.Name}}{}, err
-        }
-
-        return item, nil
     {{ else }}
 
         var item {{.Struct.Package}}.{{.Struct.Object.Name}}
@@ -701,22 +604,21 @@ func (mdb *{{.Struct.Object.Name}}DB) Update(ctx context.Context, publicID strin
 
     {{ $pfield := fieldByName .Struct "PublicID" }}
     {{ $ptag := getTag $pfield "bson" "json"}}
-		query := bson.M{"{{$ptag.Value}}": publicID}
+    query := bson.M{"{{$ptag.Value}}": publicID}
 
-    if fields, ok := interface{}(elem).({{.Struct.Object.Name}}BSON); ok {
-        if err := database.C(mdb.col).Update(query, fields.BSON()); err != nil {
-            mdb.metrics.Emit(metrics.Errorf("Failed to update {{.Struct.Object.Name}} record"),metrics.With("collection", mdb.col),metrics.With("public_id", publicID),metrics.With("query", query),metrics.With("error", err.Error()))
-
+    if fielder, ok := interface{}(elem).({{.Struct.Object.Name}}Fields); ok {
+        fields, err := fielder.Fields()
+        if err != nil {
+            mdb.metrics.Emit(
+                metrics.Errorf("Failed to get Fields() for {{.Struct.Object.Name}} record"),
+                metrics.With("collection", mdb.col),
+                metrics.With("elem", elem),
+                metrics.With("error", err.Error()),
+            )
             return err
         }
 
-        mdb.metrics.Emit(metrics.Info("Update record"),metrics.With("query", query),metrics.With("collection", mdb.col),metrics.With("public_id", publicID),metrics.With("data", fields.BSON()))
-
-        return nil
-    }
-
-    if fields, ok := interface{}(elem).({{.Struct.Object.Name}}Fields); ok {
-        if err := database.C(mdb.col).Update(query, fields.Fields()); err != nil {
+        if err := database.C(mdb.col).Update(query, fields); err != nil {
             mdb.metrics.Emit(metrics.Errorf("Failed to update {{.Struct.Object.Name}} record"),metrics.With("query", query),metrics.With("public_id", publicID),metrics.With("collection", mdb.col),metrics.With("error", err.Error()))
             return err
         }
