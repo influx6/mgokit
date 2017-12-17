@@ -1004,7 +1004,7 @@ func ParsePackage(toDir string, log metrics.Metrics, provider *AnnotationRegistr
 		if err != nil {
 			log.Emit(metrics.Error(fmt.Errorf("ParseFailure: Package %q", pkg.Package)),
 				metrics.With("error", err.Error()), metrics.With("package", pkg.Package))
-			continue
+			return err
 		}
 
 		log.Emit(metrics.Info("ParseSuccess"), metrics.With("From", pkg.FilePath), metrics.With("package", pkg.Package), metrics.With("Directives", len(wdrs)))
@@ -1015,7 +1015,7 @@ func ParsePackage(toDir string, log metrics.Metrics, provider *AnnotationRegistr
 					metrics.With("dir", toDir),
 					metrics.With("package", pkg.Package),
 					metrics.With("file", pkg.File))
-				continue
+				return err
 			}
 
 			log.Emit(metrics.Info("Annotation Resolved"), metrics.With("annotation", wd.Annotation),
@@ -1045,7 +1045,7 @@ func SimplyParsePackage(toDir string, log metrics.Metrics, provider *AnnotationR
 		if err != nil {
 			log.Emit(metrics.Error(fmt.Errorf("ParseFailure: Package %q", pkg.Package)),
 				metrics.With("error", err.Error()), metrics.With("package", pkg.Package))
-			continue
+			return err
 		}
 
 		log.Emit(metrics.Info("ParseSuccess"), metrics.With("From", pkg.FilePath), metrics.With("package", pkg.Package), metrics.With("Directives", len(wdrs)))
@@ -1056,7 +1056,7 @@ func SimplyParsePackage(toDir string, log metrics.Metrics, provider *AnnotationR
 					metrics.With("dir", toDir),
 					metrics.With("package", pkg.Package),
 					metrics.With("file", pkg.File))
-				continue
+				return err
 			}
 
 			log.Emit(metrics.Info("Annotation Resolved"), metrics.With("annotation", wd.Annotation),
