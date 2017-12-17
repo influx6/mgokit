@@ -353,7 +353,7 @@ func (mdb *{{.Struct.Object.Name}}DB) GetAllByOrder(ctx context.Context, order, 
     query := bson.M{}
 
     {{ if ( hasFunc .Struct "Consume"  ) }}
-        var ditem []map[string]interface{}
+        var ditems []map[string]interface{}
         if err := database.C(mdb.col).Find(query).Sort(orderBy).All(&ditems); err != nil {
             mdb.metrics.Emit(
                 metrics.Errorf("Failed to retrieve all records of {{.Struct.Object.Name}} type from db"),
