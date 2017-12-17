@@ -22,13 +22,6 @@ var (
 		"greaterThanEqual": func(b, a int) bool {
 			return b >= a
 		},
-		"capitalize": func(b string) string {
-			if len(b) == 0 {
-				return b
-			}
-
-			return strings.ToUpper(b[:1]) + b[1:]
-		},
 		"notempty": func(b string) bool {
 			return strings.TrimSpace(b) != ""
 		},
@@ -58,6 +51,26 @@ var (
 		},
 		"replaceAll": func(b, target, sub string) string {
 			return strings.Replace(b, target, sub, -1)
+		},
+		"capitalize": func(b string) string {
+			if len(b) == 0 {
+				return b
+			}
+
+			return strings.ToUpper(b[:1]) + b[1:]
+		},
+		"toCapital": func(b string) string {
+			if len(b) == 0 {
+				return b
+			}
+
+			return strings.ToUpper(b[:1]) + b[1:]
+		},
+		"toLower": func(b string) string {
+			return strings.ToLower(b)
+		},
+		"toUpper": func(b string) string {
+			return strings.ToUpper(b)
 		},
 		"lower": func(b string) string {
 			return strings.ToLower(b)

@@ -37,6 +37,8 @@ package box
 
 You annotate any giving struct with `@mongoapi` which marks giving struct has a target for code generation. 
 
+*All struct must have a `PublicID` field.*
+
 Sample below:
 
 ```go

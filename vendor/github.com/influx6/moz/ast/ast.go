@@ -413,16 +413,10 @@ type PackageDeclaration struct {
 	Structs          []StructDeclaration
 	Interfaces       []InterfaceDeclaration
 	Functions        []FuncDeclaration
+	Variables        []VariableDeclaration
 	ObjectFunc       map[*ast.Object][]FuncDeclaration
 	ImportedPackages map[string]Packages
 	importedloaded   bool
-}
-
-// HasFunctionFor returns true/false if the giving function name exists for the package.
-func HasFunctionFor(pkg PackageDeclaration) func(StructDeclaration, string) bool {
-	return func(str StructDeclaration, funcName string) bool {
-		return pkg.HasFunctionFor(str, funcName)
-	}
 }
 
 // loadImported will attempt to load all available imported package that
@@ -604,6 +598,24 @@ func (pkg PackageDeclaration) FunctionsFor(obj *ast.Object) []FuncDeclaration {
 
 //===========================================================================================================
 
+// VariableDeclaration defines a type which holds annotation data for a giving variable declaration.
+type VariableDeclaration struct {
+	From         int
+	Length       int
+	Package      string
+	Path         string
+	FilePath     string
+	Source       string
+	Comments     string
+	File         string
+	Position     token.Pos
+	Object       *ast.ValueSpec
+	GenObj       *ast.GenDecl
+	Declr        *PackageDeclaration
+	Annotations  []AnnotationDeclaration
+	Associations map[string]AnnotationAssociationDeclaration
+}
+
 // StructDeclaration defines a type which holds annotation data for a giving struct type declaration.
 type StructDeclaration struct {
 	From         int
@@ -616,6 +628,7 @@ type StructDeclaration struct {
 	File         string
 	Struct       *ast.StructType
 	Object       *ast.TypeSpec
+	GenObj       *ast.GenDecl
 	Position     token.Pos
 	Declr        *PackageDeclaration
 	Annotations  []AnnotationDeclaration
@@ -650,6 +663,7 @@ type TypeDeclaration struct {
 	Comments     string
 	File         string
 	Object       *ast.TypeSpec
+	GenObj       *ast.GenDecl
 	Position     token.Pos
 	Declr        *PackageDeclaration
 	Annotations  []AnnotationDeclaration
@@ -678,28 +692,30 @@ func (ty TypeDeclaration) AnnotationsFor(typeName string) []AnnotationDeclaratio
 // FuncDeclaration defines a type used to annotate a giving type declaration
 // associated with a ast for a function.
 type FuncDeclaration struct {
-	From          int
-	Length        int
-	Package       string
-	Path          string
-	FilePath      string
-	Exported      bool
-	File          string
-	FuncName      string
-	RecieverName  string
-	Source        string
-	Comments      string
-	Position      token.Pos
-	FuncDeclr     *ast.FuncDecl
-	Type          *ast.FuncType
-	Reciever      *ast.Object
-	RecieverIdent *ast.Ident
-	FuncType      *ast.FieldList
-	Returns       *ast.FieldList
-	Arguments     *ast.FieldList
-	Declr         *PackageDeclaration
-	Annotations   []AnnotationDeclaration
-	Associations  map[string]AnnotationAssociationDeclaration
+	From            int
+	Length          int
+	Package         string
+	Path            string
+	FilePath        string
+	Exported        bool
+	File            string
+	FuncName        string
+	RecieverName    string
+	Source          string
+	Comments        string
+	Position        token.Pos
+	TypeDeclr       ast.Decl
+	FuncDeclr       *ast.FuncDecl
+	Type            *ast.FuncType
+	Reciever        *ast.Object
+	RecieverIdent   *ast.Ident
+	RecieverPointer *ast.StarExpr
+	FuncType        *ast.FieldList
+	Returns         *ast.FieldList
+	Arguments       *ast.FieldList
+	Declr           *PackageDeclaration
+	Annotations     []AnnotationDeclaration
+	Associations    map[string]AnnotationAssociationDeclaration
 }
 
 // AnnotationsFor returns all annotations with the giving name.
@@ -790,6 +806,7 @@ type InterfaceDeclaration struct {
 	File         string
 	Interface    *ast.InterfaceType
 	Object       *ast.TypeSpec
+	GenObj       *ast.GenDecl
 	Position     token.Pos
 	Declr        *PackageDeclaration
 	Annotations  []AnnotationDeclaration
@@ -891,6 +908,174 @@ func (fd FunctionDefinition) ArgumentList(asFromOutside bool) string {
 
 	return strings.Join(args, ",")
 }
+
+//===========================================================================================================
+
+// Fields defines a slice type of FieldDeclaration.
+type Fields []FieldDeclaration
+
+// Normal defines a function that returns all fields which are non-embedded.
+func (flds Fields) Normal() Fields {
+	var fields Fields
+
+	for _, declr := range flds {
+		if declr.Embedded {
+			continue
+		}
+
+		fields = append(fields, declr)
+	}
+
+	return fields
+}
+
+// Embedded defines a function that returns all appropriate Field
+// that match the giving tagName
+func (flds Fields) Embedded() Fields {
+	var fields Fields
+
+	for _, declr := range flds {
+		if declr.Embedded {
+			fields = append(fields, declr)
+		}
+	}
+
+	return fields
+}
+
+// TagFor defines a function that returns all appropriate TagDeclaration
+// that match the giving tagName
+func (flds Fields) TagFor(tagName string) []TagDeclaration {
+	var declrs []TagDeclaration
+
+	for _, declr := range flds {
+		if dl, err := declr.GetTag(tagName); err == nil {
+			declrs = append(declrs, dl)
+		}
+	}
+
+	return declrs
+}
+
+// FieldDeclaration defines a type to represent a giving struct fields and tags.
+type FieldDeclaration struct {
+	Exported      bool
+	Embedded      bool
+	IsStruct      bool
+	FieldName     string
+	FieldTypeName string
+	Field         *ast.Field
+	Type          *ast.Object
+	Spec          *ast.TypeSpec
+	Struct        *ast.StructType
+	Tags          []TagDeclaration
+	Arg           ArgType
+}
+
+// GetFields returns all fields associated with the giving struct but skips
+func GetFields(str StructDeclaration, pkg *PackageDeclaration) []FieldDeclaration {
+	var fields []FieldDeclaration
+
+	for _, item := range str.Struct.Fields.List {
+		arg, err := GetArgTypeFromField("var", pkg.File, item, pkg)
+		if err != nil {
+			continue
+		}
+
+		var field FieldDeclaration
+		field.Arg = arg
+		field.Type = arg.TypeObject
+		field.Spec = arg.Spec
+		field.Struct = arg.StructObject
+		field.Field = item
+		field.FieldName = arg.Name
+		field.FieldTypeName = arg.Type
+
+		if len(item.Names) == 0 {
+			field.Exported = true
+			field.Embedded = true
+		}
+
+		if arg.Name != strings.ToLower(arg.Name) {
+			field.Exported = true
+		}
+
+		for _, tag := range arg.Tags {
+			tag.Field = field
+			field.Tags = append(field.Tags, tag)
+		}
+
+		fields = append(fields, field)
+	}
+
+	return fields
+}
+
+// GetTag returns the giving tag associated with the name if it exists.
+func (f FieldDeclaration) GetTag(tagName string) (TagDeclaration, error) {
+	for _, tag := range f.Tags {
+		if tag.Name == tagName {
+			return tag, nil
+		}
+	}
+
+	return TagDeclaration{}, fmt.Errorf("Tag for %q not found", tagName)
+}
+
+// TagDeclaration defines a type which represents a giving tag declaration for a provided type.
+type TagDeclaration struct {
+	Name  string
+	Value string
+	Metas []string
+	Base  string
+	Field FieldDeclaration
+}
+
+// Has returns true/false if the tag.Metas has the given value in the list.
+func (t TagDeclaration) Has(item string) bool {
+	for _, meta := range t.Metas {
+		if meta == item {
+			return true
+		}
+	}
+
+	return false
+}
+
+// ToValueString returns the string representation of a basic go core datatype.
+func ToValueString(val interface{}) string {
+	switch bo := val.(type) {
+	case *time.Time:
+		return bo.UTC().String()
+	case time.Time:
+		return bo.UTC().String()
+	case string:
+		return strconv.Quote(bo)
+	case int:
+		return strconv.Itoa(bo)
+	case int64:
+		return strconv.Itoa(int(bo))
+	case rune:
+		return strconv.QuoteRune(bo)
+	case bool:
+		return strconv.FormatBool(bo)
+	case byte:
+		return strconv.QuoteRune(rune(bo))
+	case float64:
+		return strconv.FormatFloat(bo, 'f', 4, 64)
+	case float32:
+		return strconv.FormatFloat(float64(bo), 'f', 4, 64)
+	default:
+		data, err := json.Marshal(val)
+		if err != nil {
+			return err.Error()
+		}
+
+		return string(data)
+	}
+}
+
+//===========================================================================================================
 
 // GetIdentName returns the first indent found within the field if it exists.
 func GetIdentName(field *ast.Field) (*ast.Ident, error) {
@@ -1526,7 +1711,6 @@ func getNameAsFromOuter(item interface{}, basePkg string) string {
 	case *ast.InterfaceType:
 		return "interface{}"
 	case *ast.MapType:
-		// fmt.Printf("MapType: %#v : %#v\n", di.Key, di.Value)
 		keyName := getNameAsFromOuter(di.Key, basePkg)
 		valName := getNameAsFromOuter(di.Value, basePkg)
 		return fmt.Sprintf("map[%s]%s", keyName, valName)
@@ -1655,8 +1839,6 @@ func GetStructSpec(val interface{}) (*ast.TypeSpec, *ast.StructType, error) {
 
 	return rval, rstruct, nil
 }
-
-//===========================================================================================================
 
 // MapOutFields defines a function to return a map of field name and value
 // pair for the giving struct.
@@ -2155,170 +2337,4 @@ func GetTag(f FieldDeclaration, tagName string, fallback string) (TagDeclaration
 	}
 
 	return tg, nil
-}
-
-//===========================================================================================================
-
-// Fields defines a slice type of FieldDeclaration.
-type Fields []FieldDeclaration
-
-// Normal defines a function that returns all fields which are non-embedded.
-func (flds Fields) Normal() Fields {
-	var fields Fields
-
-	for _, declr := range flds {
-		if declr.Embedded {
-			continue
-		}
-
-		fields = append(fields, declr)
-	}
-
-	return fields
-}
-
-// Embedded defines a function that returns all appropriate Field
-// that match the giving tagName
-func (flds Fields) Embedded() Fields {
-	var fields Fields
-
-	for _, declr := range flds {
-		if declr.Embedded {
-			fields = append(fields, declr)
-		}
-	}
-
-	return fields
-}
-
-// TagFor defines a function that returns all appropriate TagDeclaration
-// that match the giving tagName
-func (flds Fields) TagFor(tagName string) []TagDeclaration {
-	var declrs []TagDeclaration
-
-	for _, declr := range flds {
-		if dl, err := declr.GetTag(tagName); err == nil {
-			declrs = append(declrs, dl)
-		}
-	}
-
-	return declrs
-}
-
-// FieldDeclaration defines a type to represent a giving struct fields and tags.
-type FieldDeclaration struct {
-	Exported      bool
-	Embedded      bool
-	IsStruct      bool
-	FieldName     string
-	FieldTypeName string
-	Field         *ast.Field
-	Type          *ast.Object
-	Spec          *ast.TypeSpec
-	Struct        *ast.StructType
-	Tags          []TagDeclaration
-	Arg           ArgType
-}
-
-// GetFields returns all fields associated with the giving struct but skips
-func GetFields(str StructDeclaration, pkg *PackageDeclaration) []FieldDeclaration {
-	var fields []FieldDeclaration
-
-	for _, item := range str.Struct.Fields.List {
-		arg, err := GetArgTypeFromField("var", pkg.File, item, pkg)
-		if err != nil {
-			continue
-		}
-
-		var field FieldDeclaration
-		field.Arg = arg
-		field.Type = arg.TypeObject
-		field.Spec = arg.Spec
-		field.Struct = arg.StructObject
-		field.Field = item
-		field.FieldName = arg.Name
-		field.FieldTypeName = arg.Type
-
-		if len(item.Names) == 0 {
-			field.Exported = true
-			field.Embedded = true
-		}
-
-		if arg.Name != strings.ToLower(arg.Name) {
-			field.Exported = true
-		}
-
-		for _, tag := range arg.Tags {
-			tag.Field = field
-			field.Tags = append(field.Tags, tag)
-		}
-
-		fields = append(fields, field)
-	}
-
-	return fields
-}
-
-// GetTag returns the giving tag associated with the name if it exists.
-func (f FieldDeclaration) GetTag(tagName string) (TagDeclaration, error) {
-	for _, tag := range f.Tags {
-		if tag.Name == tagName {
-			return tag, nil
-		}
-	}
-
-	return TagDeclaration{}, fmt.Errorf("Tag for %q not found", tagName)
-}
-
-// TagDeclaration defines a type which represents a giving tag declaration for a provided type.
-type TagDeclaration struct {
-	Name  string
-	Value string
-	Metas []string
-	Base  string
-	Field FieldDeclaration
-}
-
-// Has returns true/false if the tag.Metas has the given value in the list.
-func (t TagDeclaration) Has(item string) bool {
-	for _, meta := range t.Metas {
-		if meta == item {
-			return true
-		}
-	}
-
-	return false
-}
-
-// ToValueString returns the string representation of a basic go core datatype.
-func ToValueString(val interface{}) string {
-	switch bo := val.(type) {
-	case *time.Time:
-		return bo.UTC().String()
-	case time.Time:
-		return bo.UTC().String()
-	case string:
-		return strconv.Quote(bo)
-	case int:
-		return strconv.Itoa(bo)
-	case int64:
-		return strconv.Itoa(int(bo))
-	case rune:
-		return strconv.QuoteRune(bo)
-	case bool:
-		return strconv.FormatBool(bo)
-	case byte:
-		return strconv.QuoteRune(rune(bo))
-	case float64:
-		return strconv.FormatFloat(bo, 'f', 4, 64)
-	case float32:
-		return strconv.FormatFloat(float64(bo), 'f', 4, 64)
-	default:
-		data, err := json.Marshal(val)
-		if err != nil {
-			return err.Error()
-		}
-
-		return string(data)
-	}
 }
