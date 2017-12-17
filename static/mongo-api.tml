@@ -306,16 +306,16 @@ func (mdb *{{.Struct.Object.Name}}DB) GetAllPerPage(ctx context.Context, order s
             if err := elem.Consume(item); err != nil {
                 return nil, -1, err
             }
-            items = append(items, elem)
+            ritems = append(ritems, elem)
         }
     {{ else }}
-        if err := database.C(mdb.col).Find(query).Skip(indexToStart).Limit(totalWanted).Sort(orderBy).All(&items); err != nil {
+        if err := database.C(mdb.col).Find(query).Skip(indexToStart).Limit(totalWanted).Sort(orderBy).All(&ritems); err != nil {
             mdb.metrics.Emit(metrics.Errorf("Failed to retrieve all records of {{.Struct.Object.Name}} type from db"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("error", err.Error()))
             return nil, -1, err
         }
     {{ end }}
 
-    return items, totalRecords, nil
+    return ritems, totalRecords, nil
 }
 
 // GetAllByOrder retrieves all records from the db and returns a slice of {{.Struct.Package}}.{{.Struct.Object.Name}} type.
@@ -353,33 +353,31 @@ func (mdb *{{.Struct.Object.Name}}DB) GetAllByOrder(ctx context.Context, order, 
     query := bson.M{}
 
     {{ if ( hasFunc .Struct "Consume"  ) }}
-        var items []map[string]interface{}
-
-        if err := database.C(mdb.col).Find(query).Sort(orderBy).All(&items); err != nil {
-            mdb.metrics.Emit(metrics.Errorf("Failed to retrieve all records of {{.Struct.Object.Name}} type from db"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("error", err.Error()))
-
+        var ditem []map[string]interface{}
+        if err := database.C(mdb.col).Find(query).Sort(orderBy).All(&ditems); err != nil {
+            mdb.metrics.Emit(
+                metrics.Errorf("Failed to retrieve all records of {{.Struct.Object.Name}} type from db"),
+                metrics.With("collection", mdb.col),
+                metrics.With("query", query),
+                metrics.With("error", err.Error()),
+            )
             return nil, err
         }
 
         var ritems []{{.Struct.Package}}.{{.Struct.Object.Name}}
-
-        for _, item := range items {
+        for _, item := range ditems {
             var elem {{.Struct.Package}}.{{.Struct.Object.Name}}
-
             if err := elem.Consume(item); err != nil {
                 return nil, err
             }
-
             ritems = append(ritems, elem)
         }
 
         return ritems, nil
     {{ else }}
         var items []{{.Struct.Package}}.{{.Struct.Object.Name}}
-
         if err := database.C(mdb.col).Find(query).Sort(orderBy).All(&items); err != nil {
             mdb.metrics.Emit(metrics.Errorf("Failed to retrieve all records of {{.Struct.Object.Name}} type from db"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("error", err.Error()))
-
             return nil, err
         }
 
