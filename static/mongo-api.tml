@@ -300,14 +300,17 @@ func (mdb *{{.Struct.Object.Name}}DB) GetAllPerPage(ctx context.Context, order s
 		}
 	}
 
-	mdb.metrics.Emit(metrics.Info("DB:Query:GetAllPerPage").WithFields(metrics.Field{
-		"starting_index":       indexToStart,
-		"total_records_wanted": totalWanted,
-		"order":                order,
-		"orderBy":              orderBy,
-		"page":                 page,
-		"responsePerPage":      responsePerPage,
-	}))
+	mdb.metrics.Emit(
+        metrics.Info("DB:Query:GetAllPerPage"), 
+        metrics.WithFields(metrics.Field{
+            "starting_index":       indexToStart,
+            "total_records_wanted": totalWanted,
+            "order":                order,
+            "orderBy":              orderBy,
+            "page":                 page,
+            "responsePerPage":      responsePerPage,
+        }),
+    )
 
     database, session, err := mdb.db.New()
     if err != nil {
@@ -623,7 +626,13 @@ func (mdb *{{.Struct.Object.Name}}DB) Update(ctx context.Context, publicID strin
             return err
         }
 
-        mdb.metrics.Emit(metrics.Info("Create record"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("data", fields.Fields()),metrics.With("public_id", publicID))
+        mdb.metrics.Emit(
+            metrics.Info("Create record"),
+            metrics.With("collection", mdb.col),
+            metrics.With("query", query),
+            metrics.With("data", fields),
+            metrics.With("public_id", publicID),
+        )
 
         return nil
     }
@@ -676,8 +685,7 @@ func (mdb *{{.Struct.Object.Name}}DB) Exec(ctx context.Context, fx func(col *mgo
         return err
     }
 
-    mdb.metrics.Emit(metrics.Info("Operation executed").
-    With("collection", mdb.col))
+    mdb.metrics.Emit(metrics.Info("Operation executed"), metrics.With("collection", mdb.col))
 
     return nil
 }
