@@ -62,6 +62,7 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 	}
 
 	packageName := fmt.Sprintf("%smgo", strings.ToLower(str.Object.Name.Name))
+	packageFinalPath := filepath.Join(str.Path, toDir, packageName)
 
 	mongoTestGen := gen.Block(
 		gen.Package(
@@ -115,7 +116,11 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 					Struct       ast.StructDeclaration
 					CreateAction ast.StructDeclaration
 					UpdateAction ast.StructDeclaration
+					PackageName  string
+					PackagePath  string
 				}{
+					PackagePath:  packageFinalPath,
+					PackageName:  packageName,
 					Pkg:          &pkgDeclr,
 					Struct:       str,
 					CreateAction: createAction,
@@ -142,6 +147,39 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 							"mapValues": ast.MapOutValues,
 							"mapJSON":   ast.MapOutFieldsToJSON,
 							"hasFunc":   pkgDeclr.HasFunctionFor,
+						},
+					),
+					struct {
+						Pkg          *ast.PackageDeclaration
+						Struct       ast.StructDeclaration
+						CreateAction ast.StructDeclaration
+						UpdateAction ast.StructDeclaration
+					}{
+						Pkg:          &pkgDeclr,
+						Struct:       str,
+						CreateAction: createAction,
+						UpdateAction: updateAction,
+					},
+				),
+			),
+		),
+	)
+
+	mongoBackendGen := gen.Block(
+		gen.Package(
+			gen.Name("types"),
+			gen.Imports(
+				gen.Import("github.com/influx6/faux/context", ""),
+				gen.Import(str.Path, ""),
+			),
+			gen.Block(
+				gen.SourceTextWith(
+					string(static.MustReadFile("mongo-api-backend.tml", true)),
+					gen.ToTemplateFuncs(
+						ast.ASTTemplatFuncs,
+						template.FuncMap{
+							"map":     ast.MapOutFields,
+							"hasFunc": pkgDeclr.HasFunctionFor,
 						},
 					),
 					struct {
@@ -213,6 +251,12 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 			FileName: fmt.Sprintf("%s_test.go", packageName),
 			Dir:      packageName,
 			// DontOverride: true,
+		},
+		{
+			Writer:       fmtwriter.New(mongoBackendGen, true, true),
+			FileName:     fmt.Sprintf("%s_backend.go", strings.ToLower(str.Object.Name.Name)),
+			Dir:          "types",
+			DontOverride: true,
 		},
 		{
 			Writer:   fmtwriter.New(mongoGen, true, true),

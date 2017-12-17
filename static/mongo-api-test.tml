@@ -3,11 +3,11 @@ var (
 
     config = mongo.Config{
         Mode: mgo.Monotonic,
-        DB: os.Getenv("{{.Struct.Package}}_MONGO_DB"),
-        Host: os.Getenv("{{.Struct.Package}}_MONGO_HOST"),
-        User: os.Getenv("{{.Struct.Package}}_MONGO_USER"),
-        AuthDB: os.Getenv("{{.Struct.Package}}_MONGO_AUTHDB"),
-        Password: os.Getenv("{{.Struct.Package}}_MONGO_PASSWORD"),
+        DB: os.Getenv("{{.Struct.Package}}_MONGO_TEST_DB"),
+        Host: os.Getenv("{{.Struct.Package}}_MONGO_TEST_HOST"),
+        User: os.Getenv("{{.Struct.Package}}_MONGO_TEST_USER"),
+        AuthDB: os.Getenv("{{.Struct.Package}}_MONGO_TEST_AUTHDB"),
+        Password: os.Getenv("{{.Struct.Package}}_MONGO_TEST_PASSWORD"),
     }
 
     testCol = "{{lower .Struct.Object.Name.Name}}_test_collection"
@@ -60,7 +60,7 @@ func TestGetAll{{.Struct.Object.Name}}(t *testing.T){
     }
     tests.Passed("Successfully added record for {{.Struct.Object.Name}} into db.")
 
-    records, _, err := api.GetAllPerPage(ctx, "asc", "public_id", -1, -1)
+    records, _, err := api.GetAll(ctx, "asc", "public_id", -1, -1)
     if err != nil {
         tests.Failed("Successfully retrieved all records for {{.Struct.Object.Name}} from db: %+q.", err)
     }

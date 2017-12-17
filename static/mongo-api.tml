@@ -223,10 +223,10 @@ func (mdb *{{.Struct.Object.Name}}DB) Create(ctx context.Context, elem {{.Struct
     return nil
 }
 
-// GetAllPerPage retrieves all records from the db and returns a slice of {{.Struct.Package}}.{{.Struct.Object.Name}} type.
+// GetAll retrieves all records from the db and returns a slice of {{.Struct.Package}}.{{.Struct.Object.Name}} type.
 // Records using this DB must have a public id value, expressed either by a bson or json tag
 // on the given {{.Struct.Object.Name}} struct.
-func (mdb *{{.Struct.Object.Name}}DB) GetAllPerPage(ctx context.Context, order string, orderBy string, page int, responsePerPage int)  ([]{{.Struct.Package}}.{{.Struct.Object.Name}},  int, error) {
+func (mdb *{{.Struct.Object.Name}}DB) GetAll(ctx context.Context, order string, orderBy string, page int, responsePerPage int)  ([]{{.Struct.Package}}.{{.Struct.Object.Name}},  int, error) {
     m := metrics.NewTrace("{{.Struct.Object.Name}}DB.GetAll")
     defer mdb.metrics.Emit(metrics.Info("{{.Struct.Object.Name}}DB.GetAll"),metrics.WithTrace(m.End()))
 

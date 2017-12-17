@@ -1,5 +1,6 @@
 {{.Struct.Object.Name}} MongoDB API
 ===================================
+[![Go Report Card](https://goreportcard.com/badge/{{.PackagePath}})](https://goreportcard.com/report/{{.PackagePath}})
 
 {{.Struct.Object.Name}} MongoDB API is a auto-generated CRUD implementation for the `{{.Struct.Object.Name.Name}}` in package `{{.Pkg.Path}}`.
 
