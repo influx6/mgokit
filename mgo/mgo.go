@@ -189,10 +189,10 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 			// DontOverride: true,
 		},
 		{
-			Writer:   mongoJSONGen,
-			FileName: fmt.Sprintf("%s_fixtures_test.go", packageName),
-			Dir:      packageName,
-			// DontOverride: true,
+			Writer:       mongoJSONGen,
+			FileName:     fmt.Sprintf("%s_fixtures_test.go", packageName),
+			Dir:          packageName,
+			DontOverride: true,
 		},
 	}, nil
 }
