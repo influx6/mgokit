@@ -1,3 +1,8 @@
+// errors ...
+var (
+    ErrNotFound = errors.New("record not found")
+)
+
 // {{.Struct.Object.Name}}Fields defines an interface which exposes method to return a map of all
 // attributes associated with the defined structure as decided by the structure.
 type {{.Struct.Object.Name}}Fields  interface {
@@ -111,7 +116,6 @@ func (mdb *{{.Struct.Object.Name}}DB) Count(ctx context.Context) (int, error) {
     defer session.Close()
 
     query := bson.M{}
-
     total, err := database.C(mdb.col).Find(query).Count();
     if err != nil {
         mdb.metrics.Emit(metrics.Errorf("Failed to get record count"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("error", err.Error()))
@@ -156,6 +160,9 @@ func (mdb *{{.Struct.Object.Name}}DB) Delete(ctx context.Context, publicID strin
 
     if err := database.C(mdb.col).Remove(query); err != nil {
         mdb.metrics.Emit(metrics.Errorf("Failed to delete record"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("publicID", publicID),metrics.With("error", err.Error()))
+        if err == mgo.ErrNotFound {
+            return ErrNotFound
+        }
         return err
     }
 
@@ -298,6 +305,9 @@ func (mdb *{{.Struct.Object.Name}}DB) GetAll(ctx context.Context, order string, 
         var ditems []map[string]interface{}
         if err := database.C(mdb.col).Find(query).Skip(indexToStart).Limit(totalWanted).Sort(orderBy).All(&ditems); err != nil {
             mdb.metrics.Emit(metrics.Errorf("Failed to retrieve all records of {{.Struct.Object.Name}} type from db"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("error", err.Error()))
+            if err == mgo.ErrNotFound {
+                return nil, -1, ErrNotFound
+            }
             return nil, -1, err
         }
 
@@ -311,6 +321,9 @@ func (mdb *{{.Struct.Object.Name}}DB) GetAll(ctx context.Context, order string, 
     {{ else }}
         if err := database.C(mdb.col).Find(query).Skip(indexToStart).Limit(totalWanted).Sort(orderBy).All(&ritems); err != nil {
             mdb.metrics.Emit(metrics.Errorf("Failed to retrieve all records of {{.Struct.Object.Name}} type from db"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("error", err.Error()))
+            if err == mgo.ErrNotFound {
+                return nil, -1, ErrNotFound
+            }
             return nil, -1, err
         }
     {{ end }}
@@ -361,6 +374,9 @@ func (mdb *{{.Struct.Object.Name}}DB) GetAllByOrder(ctx context.Context, order, 
                 metrics.With("query", query),
                 metrics.With("error", err.Error()),
             )
+            if err == mgo.ErrNotFound {
+                return nil, ErrNotFound
+            }
             return nil, err
         }
 
@@ -378,6 +394,9 @@ func (mdb *{{.Struct.Object.Name}}DB) GetAllByOrder(ctx context.Context, order, 
         var items []{{.Struct.Package}}.{{.Struct.Object.Name}}
         if err := database.C(mdb.col).Find(query).Sort(orderBy).All(&items); err != nil {
             mdb.metrics.Emit(metrics.Errorf("Failed to retrieve all records of {{.Struct.Object.Name}} type from db"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("error", err.Error()))
+            if err == mgo.ErrNotFound {
+                return nil, ErrNotFound
+            }
             return nil, err
         }
 
@@ -422,7 +441,9 @@ func (mdb *{{.Struct.Object.Name}}DB) GetByField(ctx context.Context, key string
 
         if err := database.C(mdb.col).Find(query).One(&item); err != nil {
             mdb.metrics.Emit(metrics.Errorf("Failed to retrieve all records of {{.Struct.Object.Name}} type from db"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("error", err.Error()))
-
+            if err == mgo.ErrNotFound {
+                return {{.Struct.Package}}.{{.Struct.Object.Name}}{}, ErrNotFound
+            }
             return {{.Struct.Package}}.{{.Struct.Object.Name}}{}, err
         }
 
@@ -439,7 +460,9 @@ func (mdb *{{.Struct.Object.Name}}DB) GetByField(ctx context.Context, key string
 
         if err := database.C(mdb.col).Find(query).One(&item); err != nil {
             mdb.metrics.Emit(metrics.Errorf("Failed to retrieve all records of {{.Struct.Object.Name}} type from db"),metrics.With("query", query),metrics.With("collection", mdb.col),metrics.With("error", err.Error()))
-
+            if err == mgo.ErrNotFound {
+                return {{.Struct.Package}}.{{.Struct.Object.Name}}{}, ErrNotFound
+            }
             return {{.Struct.Package}}.{{.Struct.Object.Name}}{}, err
         }
 
@@ -480,6 +503,9 @@ func (mdb *{{.Struct.Object.Name}}DB) Get(ctx context.Context, publicID string) 
 
         if err := database.C(mdb.col).Find(query).One(&item); err != nil {
             mdb.metrics.Emit(metrics.Errorf("Failed to retrieve all records of {{.Struct.Object.Name}} type from db"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("error", err.Error()))
+            if err == mgo.ErrNotFound {
+                return {{.Struct.Package}}.{{.Struct.Object.Name}}{}, ErrNotFound
+            }
             return {{.Struct.Package}}.{{.Struct.Object.Name}}{}, err
         }
 
@@ -496,7 +522,9 @@ func (mdb *{{.Struct.Object.Name}}DB) Get(ctx context.Context, publicID string) 
 
         if err := database.C(mdb.col).Find(query).One(&item); err != nil {
             mdb.metrics.Emit(metrics.Errorf("Failed to retrieve all records of {{.Struct.Object.Name}} type from db"),metrics.With("query", query),metrics.With("collection", mdb.col),metrics.With("error", err.Error()))
-
+            if err == mgo.ErrNotFound {
+                return {{.Struct.Package}}.{{.Struct.Object.Name}}{}, ErrNotFound
+            }
             return {{.Struct.Package}}.{{.Struct.Object.Name}}{}, err
         }
 
@@ -535,8 +563,8 @@ func (mdb *{{.Struct.Object.Name}}DB) Update(ctx context.Context, publicID strin
     {{ $ptag := getTag $pfield "bson" "json"}}
     query := bson.M{"{{$ptag.Value}}": publicID}
 
-    if fielder, ok := interface{}(elem).({{.Struct.Object.Name}}Fields); ok {
-        fields, err := fielder.Fields()
+    {{ if ( hasFunc .Struct "Fields"  ) }}
+        fields, err := elem.Fields()
         if err != nil {
             mdb.metrics.Emit(
                 metrics.Errorf("Failed to get Fields() for {{.Struct.Object.Name}} record"),
@@ -549,6 +577,9 @@ func (mdb *{{.Struct.Object.Name}}DB) Update(ctx context.Context, publicID strin
 
         if err := database.C(mdb.col).Update(query, fields); err != nil {
             mdb.metrics.Emit(metrics.Errorf("Failed to update {{.Struct.Object.Name}} record"),metrics.With("query", query),metrics.With("public_id", publicID),metrics.With("collection", mdb.col),metrics.With("error", err.Error()))
+            if err == mgo.ErrNotFound {
+                return ErrNotFound
+            }
             return err
         }
 
@@ -559,16 +590,16 @@ func (mdb *{{.Struct.Object.Name}}DB) Update(ctx context.Context, publicID strin
             metrics.With("data", fields),
             metrics.With("public_id", publicID),
         )
-
-        return nil
-    }
-
-    queryData := bson.M({{ map .CreateAction "elem" "bson" "json" }})
-
-    if err := database.C(mdb.col).Update(query, queryData); err != nil {
-        mdb.metrics.Emit(metrics.Errorf("Failed to update {{.Struct.Object.Name}} record"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("data", queryData),metrics.With("public_id", publicID),metrics.With("error", err.Error()))
-        return err
-    }
+    {{else}}
+        queryData := bson.M({{ map .CreateAction "elem" "bson" "json" }})
+        if err := database.C(mdb.col).Update(query, queryData); err != nil {
+            mdb.metrics.Emit(metrics.Errorf("Failed to update {{.Struct.Object.Name}} record"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("data", queryData),metrics.With("public_id", publicID),metrics.With("error", err.Error()))
+            if err == mgo.ErrNotFound {
+                return ErrNotFound
+            }
+            return err
+        }
+    {{end}}
 
     mdb.metrics.Emit(metrics.Info("Update record"),metrics.With("collection", mdb.col),metrics.With("public_id", publicID),metrics.With("query", query))
 
@@ -602,6 +633,9 @@ func (mdb *{{.Struct.Object.Name}}DB) Exec(ctx context.Context, fx func(col *mgo
 
     if err := fx(database.C(mdb.col)); err != nil {
         mdb.metrics.Emit(metrics.Errorf("Failed to execute operation"),metrics.With("collection", mdb.col),metrics.With("error", err.Error()))
+        if err == mgo.ErrNotFound {
+            return ErrNotFound
+        }
         return err
     }
 
