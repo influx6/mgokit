@@ -21,6 +21,7 @@ func main() {
 		Action: func(ctx context.Context) error {
 			force, _ := ctx.Bag().GetBool("force")
 			dest, _ := ctx.Bag().GetString("dest")
+			target, _ := ctx.Bag().GetString("target")
 			verbose, _ := ctx.Bag().GetBool("verbose")
 
 			logs := metrics.New()
@@ -33,6 +34,8 @@ func main() {
 			if err != nil {
 				return err
 			}
+
+			currentdir = filepath.Join(currentdir,target)
 
 			generators := ast.NewAnnotationRegistryWith(logs)
 			generators.Register("mongo", mgo.MongoSolo)
@@ -58,6 +61,17 @@ func main() {
 				Name:    "dest",
 				Default: "./",
 				Desc:    "relative destination for package",
+				Validation: func(received string) error {
+					if filepath.IsAbs(received) {
+						return errors.New("only relative paths not absolute allowed")
+					}
+					return nil
+				},
+			},
+			&flags.StringFlag{
+				Name:    "target",
+				Default: "./",
+				Desc:    "-target=./ defines relative path of target for code gen",
 				Validation: func(received string) error {
 					if filepath.IsAbs(received) {
 						return errors.New("only relative paths not absolute allowed")
