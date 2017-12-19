@@ -46,6 +46,7 @@ var (
 		"fieldByName":       FieldByFieldName,
 		"randomValue":       RandomFieldAssign,
 		"fieldsJSON":        MapOutFieldsToJSON,
+		"randomValuesJSON":  MapOutFieldsWithRandomValuesToJSON,
 		"stringValueFor":    ToValueString,
 		"defaultValue":      AssignDefaultValue,
 		"randomFieldValue":  RandomFieldValue,
@@ -2091,6 +2092,23 @@ func MapOutFieldsToJSON(item StructDeclaration, tagName, fallback string) (strin
 	return doc.String(), nil
 }
 
+// MapOutFieldsWithRandomValuesToJSON returns the giving map values containing string for the giving
+// output.
+func MapOutFieldsWithRandomValuesToJSON(item StructDeclaration, tagName, fallback string) (string, error) {
+	document, err := MapOutFieldsToJSONWriterWithRandomValues(item, tagName, fallback)
+	if err != nil {
+		return "", err
+	}
+
+	var doc bytes.Buffer
+
+	if _, err := document.WriteTo(&doc); err != nil && err != io.EOF {
+		return "", err
+	}
+
+	return doc.String(), nil
+}
+
 // MapOutFieldsToJSONWriter returns the giving map values containing string for the giving
 // output.
 func MapOutFieldsToJSONWriter(item StructDeclaration, tagName, fallback string) (io.WriterTo, error) {
@@ -2139,6 +2157,59 @@ func MapOutFieldsToJSONWriter(item StructDeclaration, tagName, fallback string) 
 		}
 
 		documents[tag.Value] = gen.Text(DefaultTypeValueString(strings.ToLower(tag.Field.FieldTypeName)))
+	}
+
+	return gen.JSONDocument(documents), nil
+}
+
+// MapOutFieldsToJSONWriterWithRandomValues returns the giving map values containing string for the giving
+// output.
+func MapOutFieldsToJSONWriterWithRandomValues(item StructDeclaration, tagName, fallback string) (io.WriterTo, error) {
+	if item.Declr == nil {
+		fmt.Printf("Receiving StructDeclaration without PackageDeclaration: %#v\n", item)
+		return bytes.NewBuffer(nil), errors.New("StructDeclaration has no PackageDeclaration field")
+	}
+
+	fields := Fields(GetFields(item, item.Declr))
+
+	wTags := fields.TagFor(tagName)
+	if len(wTags) == 0 {
+		wTags = fields.TagFor(fallback)
+
+		if len(wTags) == 0 {
+			return nil, fmt.Errorf("No tags match for %q and %q fallback for struct %q", tagName, fallback, item.Object.Name)
+		}
+	}
+
+	documents := make(map[string]io.WriterTo)
+
+	// Collect key field names from embedded first
+	for _, tag := range wTags {
+		if tag.Value == "-" {
+			continue
+		}
+
+		if tag.Field.Type != nil {
+			embededType, embedStruct, err := GetStructSpec(tag.Field.Type.Decl)
+			if err != nil {
+				return nil, err
+			}
+
+			document, err := MapOutFieldsToJSONWriter(StructDeclaration{
+				Object: embededType,
+				Struct: embedStruct,
+				Declr:  item.Declr,
+			}, tagName, fallback)
+
+			if err != nil {
+				return nil, err
+			}
+
+			documents[tag.Value] = document
+			continue
+		}
+
+		documents[tag.Value] = gen.Text(RandomFieldValue(tag.Field))
 	}
 
 	return gen.JSONDocument(documents), nil

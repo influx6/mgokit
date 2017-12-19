@@ -1,7 +1,7 @@
 
 // json fixtures ...
 var (
- {{.Struct.Object.Name.Name}}JSON = `{{ mapJSON .Struct "bson" "json" }}`
+ {{.Struct.Object.Name.Name}}JSON = `{{ mapRandomJSON .Struct "bson" "json" }}`
 )
 
 // Load{{.Struct.Object.Name.Name}}JSON returns a new instance of a {{.Struct.Package}}.{{.Struct.Object.Name}}.

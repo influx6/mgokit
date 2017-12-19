@@ -100,10 +100,10 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 					PackageName  string
 					PackagePath  string
 				}{
-					PackagePath:  packageFinalPath,
-					PackageName:  packageName,
-					Pkg:          &pkgDeclr,
-					Struct:       str,
+					PackagePath: packageFinalPath,
+					PackageName: packageName,
+					Pkg:         &pkgDeclr,
+					Struct:      str,
 				},
 			),
 		),
@@ -122,18 +122,19 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 					gen.ToTemplateFuncs(
 						ast.ASTTemplatFuncs,
 						template.FuncMap{
-							"map":       ast.MapOutFields,
-							"mapValues": ast.MapOutValues,
-							"mapJSON":   ast.MapOutFieldsToJSON,
-							"hasFunc":   pkgDeclr.HasFunctionFor,
+							"map":           ast.MapOutFields,
+							"mapRandomJSON": ast.MapOutFieldsWithRandomValuesToJSON,
+							"mapValues":     ast.MapOutValues,
+							"mapJSON":       ast.MapOutFieldsToJSON,
+							"hasFunc":       pkgDeclr.HasFunctionFor,
 						},
 					),
 					struct {
-						Pkg          *ast.PackageDeclaration
-						Struct       ast.StructDeclaration
+						Pkg    *ast.PackageDeclaration
+						Struct ast.StructDeclaration
 					}{
-						Pkg:          &pkgDeclr,
-						Struct:       str,
+						Pkg:    &pkgDeclr,
+						Struct: str,
 					},
 				),
 			),
@@ -158,11 +159,11 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 						},
 					),
 					struct {
-						Pkg          *ast.PackageDeclaration
-						Struct       ast.StructDeclaration
+						Pkg    *ast.PackageDeclaration
+						Struct ast.StructDeclaration
 					}{
-						Pkg:          &pkgDeclr,
-						Struct:       str,
+						Pkg:    &pkgDeclr,
+						Struct: str,
 					},
 				),
 			),
@@ -195,11 +196,11 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 						},
 					),
 					struct {
-						Pkg          *ast.PackageDeclaration
-						Struct       ast.StructDeclaration
+						Pkg    *ast.PackageDeclaration
+						Struct ast.StructDeclaration
 					}{
-						Pkg:          &pkgDeclr,
-						Struct:       str,
+						Pkg:    &pkgDeclr,
+						Struct: str,
 					},
 				),
 			),
