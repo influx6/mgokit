@@ -3,6 +3,20 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "ew6PapbTwsXcwAymkdJx5mnsXKM=",
+			"origin": "github.com/gu-io/gu/vendor/github.com/aymerick/douceur/css",
+			"path": "github.com/aymerick/douceur/css",
+			"revision": "c29e93c46aed20172ff8ec128f00be500f6a0a99",
+			"revisionTime": "2017-10-21T07:41:51Z"
+		},
+		{
+			"checksumSHA1": "UDfZCifbs3mf0UO91WuNiTpwKq4=",
+			"origin": "github.com/gu-io/gu/vendor/github.com/aymerick/douceur/parser",
+			"path": "github.com/aymerick/douceur/parser",
+			"revision": "c29e93c46aed20172ff8ec128f00be500f6a0a99",
+			"revisionTime": "2017-10-21T07:41:51Z"
+		},
+		{
 			"checksumSHA1": "wP6b3CHYhF8ivc8qo314aDd9ZCk=",
 			"path": "github.com/corpix/uarand",
 			"revision": "031be390f409fb4bac8fb299e3bcd101479f89f8",
@@ -15,10 +29,41 @@
 			"revisionTime": "2017-08-04T15:04:06Z"
 		},
 		{
+			"checksumSHA1": "V0Ftw9E3y+xKqzkK1ZoWgH7W9vo=",
+			"origin": "github.com/gu-io/gu/vendor/github.com/gorilla/css/scanner",
+			"path": "github.com/gorilla/css/scanner",
+			"revision": "c29e93c46aed20172ff8ec128f00be500f6a0a99",
+			"revisionTime": "2017-10-21T07:41:51Z"
+		},
+		{
+			"checksumSHA1": "T3ajSoVV+MGlJvGacGLCztwjLUA=",
+			"path": "github.com/gu-io/gu/common",
+			"revision": "c29e93c46aed20172ff8ec128f00be500f6a0a99",
+			"revisionTime": "2017-10-21T07:41:51Z"
+		},
+		{
+			"checksumSHA1": "pRBC1m5t4cNMBEG1eH2GF66eNuU=",
+			"path": "github.com/gu-io/gu/trees",
+			"revision": "c29e93c46aed20172ff8ec128f00be500f6a0a99",
+			"revisionTime": "2017-10-21T07:41:51Z"
+		},
+		{
+			"checksumSHA1": "JuDsCaa/3B65YqrCjGiHug+hx50=",
+			"path": "github.com/gu-io/gu/trees/css",
+			"revision": "c29e93c46aed20172ff8ec128f00be500f6a0a99",
+			"revisionTime": "2017-10-21T07:41:51Z"
+		},
+		{
 			"checksumSHA1": "qt71KoGfs0dZ/GDaXFXmvFs54PQ=",
 			"path": "github.com/icrowley/fake",
 			"revision": "e64cc2cf92049a299f359734c6ea76073f2a8b2c",
 			"revisionTime": "2017-07-23T15:10:11Z"
+		},
+		{
+			"checksumSHA1": "+2tOtDu/bK8OBuRWa+o6q08k9Yw=",
+			"path": "github.com/influx6/faux/colors",
+			"revision": "e37271d948acdfe7612797ad90345aa6a66b9153",
+			"revisionTime": "2017-12-19T10:05:44Z"
 		},
 		{
 			"checksumSHA1": "gjDEf9B7nSnXARGwrPzxoyXtdUA=",
@@ -41,6 +86,12 @@
 		{
 			"checksumSHA1": "9g0S3TnWyEHaJE4VGJmCqbqfOks=",
 			"path": "github.com/influx6/faux/fmtwriter",
+			"revision": "e37271d948acdfe7612797ad90345aa6a66b9153",
+			"revisionTime": "2017-12-19T10:05:44Z"
+		},
+		{
+			"checksumSHA1": "GdiFEDXA6ntvH/zkDyDDLbdMLBI=",
+			"path": "github.com/influx6/faux/hexwriter",
 			"revision": "e37271d948acdfe7612797ad90345aa6a66b9153",
 			"revisionTime": "2017-12-19T10:05:44Z"
 		},
@@ -75,28 +126,40 @@
 			"revisionTime": "2017-12-19T10:05:44Z"
 		},
 		{
+			"checksumSHA1": "jXfIc/N5/7eNaOywhhGJAM65Htw=",
+			"path": "github.com/influx6/faux/utils",
+			"revision": "e37271d948acdfe7612797ad90345aa6a66b9153",
+			"revisionTime": "2017-12-19T10:05:44Z"
+		},
+		{
 			"checksumSHA1": "50rYWDP2xhe3Oh1UFXrX9PkjAi4=",
 			"path": "github.com/influx6/gobuild/build",
 			"revision": "02ff49690c426e4cdd1a0987848fdd5beccfd369",
 			"revisionTime": "2017-10-05T18:33:27Z"
 		},
 		{
-			"checksumSHA1": "6I5JVaSAEPd2X267+D1J4tLreMQ=",
+			"checksumSHA1": "s4OAUw4uR7DejnbCo1JLOciRN24=",
 			"path": "github.com/influx6/moz/ast",
-			"revision": "47e7052ec83f1ce3693cd28cd4876d8acb396422",
-			"revisionTime": "2017-12-19T13:14:28Z"
+			"revision": "8be0199db508eb5379af6c6624972465fac861e8",
+			"revisionTime": "2017-12-19T13:54:36Z"
 		},
 		{
 			"checksumSHA1": "neh1CIM5oxIn7Xzsgye5IYlpX/0=",
 			"path": "github.com/influx6/moz/gen",
-			"revision": "47e7052ec83f1ce3693cd28cd4876d8acb396422",
-			"revisionTime": "2017-12-19T13:14:28Z"
+			"revision": "8be0199db508eb5379af6c6624972465fac861e8",
+			"revisionTime": "2017-12-19T13:54:36Z"
 		},
 		{
 			"checksumSHA1": "ARrBZDGCJyd6GCFG+dlFCrgXi4Q=",
 			"path": "github.com/influx6/moz/gen/templates",
-			"revision": "47e7052ec83f1ce3693cd28cd4876d8acb396422",
-			"revisionTime": "2017-12-19T13:14:28Z"
+			"revision": "8be0199db508eb5379af6c6624972465fac861e8",
+			"revisionTime": "2017-12-19T13:54:36Z"
+		},
+		{
+			"checksumSHA1": "qpEpl35oKsn3zTKgfVPF4i8+qio=",
+			"path": "github.com/lucasb-eyer/go-colorful",
+			"revision": "231272389856c976b7500c4fffcc52ddf06ff4eb",
+			"revisionTime": "2017-09-03T18:42:57Z"
 		},
 		{
 			"checksumSHA1": "sGC8yzCmU7CO6/Uy6TTWRgHpgLI=",
@@ -111,6 +174,27 @@
 			"path": "github.com/mattn/go-isatty",
 			"revision": "67c513e5729f918f5e69786686770c27141a4490",
 			"revisionTime": "2017-08-04T15:04:06Z"
+		},
+		{
+			"checksumSHA1": "1KVewmQICPa+IH1gYJUKDgNbKpY=",
+			"origin": "github.com/gu-io/gu/vendor/github.com/russross/blackfriday",
+			"path": "github.com/russross/blackfriday",
+			"revision": "c29e93c46aed20172ff8ec128f00be500f6a0a99",
+			"revisionTime": "2017-10-21T07:41:51Z"
+		},
+		{
+			"checksumSHA1": "vqc3a+oTUGX8PmD0TS+qQ7gmN8I=",
+			"origin": "github.com/gu-io/gu/vendor/golang.org/x/net/html",
+			"path": "golang.org/x/net/html",
+			"revision": "c29e93c46aed20172ff8ec128f00be500f6a0a99",
+			"revisionTime": "2017-10-21T07:41:51Z"
+		},
+		{
+			"checksumSHA1": "z79z5msRzgU48FCZxSuxfU8b4rs=",
+			"origin": "github.com/gu-io/gu/vendor/golang.org/x/net/html/atom",
+			"path": "golang.org/x/net/html/atom",
+			"revision": "c29e93c46aed20172ff8ec128f00be500f6a0a99",
+			"revisionTime": "2017-10-21T07:41:51Z"
 		},
 		{
 			"checksumSHA1": "jBzWOmKY4vGfgD+DVRzzFul+VP8=",

@@ -2335,14 +2335,22 @@ func DefaultFieldValue(fld FieldDeclaration) string {
 // typeName.
 func RandomDataTypeValueWithName(typeName string, varName string) string {
 	switch typeName {
-	case "time.Time":
-		return time.Now().UTC().String()
+	case "time.Time", "*time.Time", "Time", "time.time":
+		return strconv.Quote(time.Now().UTC().String())
 	case "uint", "uint32", "uint64":
 		return fmt.Sprintf("%d", rand.Uint64())
 	case "bool":
 		return fmt.Sprintf("%t", rand.Int63n(1) == 0)
 	case "string":
 		switch strings.ToLower(varName) {
+		case "day":
+			return fmt.Sprintf("%q", fake.WeekDay())
+		case "week":
+			return fmt.Sprintf("%d Week", fake.WeekdayNum())
+		case "year":
+			return fmt.Sprintf("%d", fake.Year(1998, 10000))
+		case "date", "date_time", "time":
+			return strconv.Quote(time.Now().UTC().String())
 		case "location", "location_address", "location_addr":
 			return fmt.Sprintf("%q", fake.Street())
 		case "company", "company_name", "companyname":
@@ -2379,7 +2387,16 @@ func RandomDataTypeValueWithName(typeName string, varName string) string {
 	case "float32", "float64":
 		return fmt.Sprintf("%.4f", rand.Float64())
 	case "int", "int32", "int64":
-		return fmt.Sprintf("%d", rand.Int63())
+		switch varName{
+		case "week":
+			return fmt.Sprintf("%d", fake.WeekdayNum())
+		case "day":
+			return fmt.Sprintf("%d", fake.Day())
+		case "year":
+			return fmt.Sprintf("%d", fake.Year(1998, 10000))
+		default:
+			return fmt.Sprintf("%d", rand.Int63())
+		}
 	default:
 		return DefaultTypeValueString(typeName)
 	}
