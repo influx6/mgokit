@@ -138,75 +138,67 @@
 			"revisionTime": "2017-10-05T18:33:27Z"
 		},
 		{
-			"checksumSHA1": "0Nap/ODsv6eoCSDIcM9zZT7xy24=",
+			"checksumSHA1": "tcMF19zvD6CcjChv3OLNw1hCI48=",
 			"path": "github.com/influx6/moz/ast",
-			"revision": "35bd53dfb3f587236aaa618e6cbc979dc6289345",
-			"revisionTime": "2017-12-19T14:13:42Z"
+			"revision": "2d0a491f4373f0d3de7463599b554a0e5fb15bd5",
+			"revisionTime": "2017-12-19T14:25:39Z"
 		},
 		{
 			"checksumSHA1": "neh1CIM5oxIn7Xzsgye5IYlpX/0=",
 			"path": "github.com/influx6/moz/gen",
-			"revision": "35bd53dfb3f587236aaa618e6cbc979dc6289345",
-			"revisionTime": "2017-12-19T14:13:42Z"
+			"revision": "2d0a491f4373f0d3de7463599b554a0e5fb15bd5",
+			"revisionTime": "2017-12-19T14:25:39Z"
 		},
 		{
 			"checksumSHA1": "BkDiS9NcrKXKYI2BKOfW+zUGSPg=",
 			"path": "github.com/influx6/moz/gen/templates",
-			"revision": "35bd53dfb3f587236aaa618e6cbc979dc6289345",
-			"revisionTime": "2017-12-19T14:13:42Z"
+			"revision": "2d0a491f4373f0d3de7463599b554a0e5fb15bd5",
+			"revisionTime": "2017-12-19T14:25:39Z"
 		},
 		{
 			"checksumSHA1": "0Hpx19+wg4cOsH/9uBX0Mtm8uVI=",
-			"origin": "github.com/gokit/mgokit/vendor/github.com/influx6/trail",
 			"path": "github.com/influx6/trail",
 			"revision": "0026735e18c21e092fd7e8cb2016337ecf75c520",
 			"revisionTime": "2017-11-22T20:27:07Z"
 		},
 		{
 			"checksumSHA1": "YVsfSXIRnzXvevLuIuZEWOmjc4E=",
-			"origin": "github.com/gokit/mgokit/vendor/github.com/influx6/trail/assets",
 			"path": "github.com/influx6/trail/assets",
 			"revision": "0026735e18c21e092fd7e8cb2016337ecf75c520",
 			"revisionTime": "2017-11-22T20:27:07Z"
 		},
 		{
 			"checksumSHA1": "rAytqgWvJDWO41ZkYShruDhmE4k=",
-			"origin": "github.com/gokit/mgokit/vendor/github.com/influx6/trail/assets/packers",
 			"path": "github.com/influx6/trail/assets/packers",
 			"revision": "0026735e18c21e092fd7e8cb2016337ecf75c520",
 			"revisionTime": "2017-11-22T20:27:07Z"
 		},
 		{
 			"checksumSHA1": "kToVxKLHARkzRvN7FPtnfI4xig0=",
-			"origin": "github.com/gokit/mgokit/vendor/github.com/influx6/trail/common",
 			"path": "github.com/influx6/trail/common",
 			"revision": "0026735e18c21e092fd7e8cb2016337ecf75c520",
 			"revisionTime": "2017-11-22T20:27:07Z"
 		},
 		{
 			"checksumSHA1": "p78VbhXSIhN9SdH/VjOK8orI4gU=",
-			"origin": "github.com/gokit/mgokit/vendor/github.com/influx6/trail/common/themes/materialcolors",
 			"path": "github.com/influx6/trail/common/themes/materialcolors",
 			"revision": "0026735e18c21e092fd7e8cb2016337ecf75c520",
 			"revisionTime": "2017-11-22T20:27:07Z"
 		},
 		{
 			"checksumSHA1": "pGf7gymvMn1P58XLYpuBjnm146w=",
-			"origin": "github.com/gokit/mgokit/vendor/github.com/influx6/trail/common/themes/styleguide",
 			"path": "github.com/influx6/trail/common/themes/styleguide",
 			"revision": "0026735e18c21e092fd7e8cb2016337ecf75c520",
 			"revisionTime": "2017-11-22T20:27:07Z"
 		},
 		{
 			"checksumSHA1": "6xIRAJR/r5jM+Xlyej/a8hZralA=",
-			"origin": "github.com/gokit/mgokit/vendor/github.com/influx6/trail/generators",
 			"path": "github.com/influx6/trail/generators",
 			"revision": "0026735e18c21e092fd7e8cb2016337ecf75c520",
 			"revisionTime": "2017-11-22T20:27:07Z"
 		},
 		{
 			"checksumSHA1": "FaK/Z9eU8Omnoc/WTwv7fUPFJwA=",
-			"origin": "github.com/gokit/mgokit/vendor/github.com/influx6/trail/generators/data",
 			"path": "github.com/influx6/trail/generators/data",
 			"revision": "0026735e18c21e092fd7e8cb2016337ecf75c520",
 			"revisionTime": "2017-11-22T20:27:07Z"

@@ -2369,7 +2369,7 @@ func RandomDataTypeValueWithName(typeName string, varName string) string {
 			return fmt.Sprintf("%q", fake.EmailSubject())
 		case "email", "email_address", "emailaddress":
 			return fmt.Sprintf("%q", fake.EmailAddress())
-		case "addr","address","street_address", "main_address", "mainaddress","streetaddress":
+		case "addr","address", "streetAddress","street_address", "main_address", "mainaddress","streetaddress":
 			return fmt.Sprintf("%q", fake.StreetAddress())
 		case "companyaddress","company_address":
 			return fmt.Sprintf("%q", fake.StreetAddress())
