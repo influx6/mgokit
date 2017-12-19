@@ -46,66 +46,47 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 		`, str.Object.Name.Name)
 	}
 
-	updateAction := str
-	createAction := str
-
-	if newActionName := an.Param("New"); newActionName != "" {
-		if action, err := ast.FindStructType(pkgDeclr, newActionName); err == nil && action.Declr != nil {
-			createAction = action
-		}
-	}
-
-	if updateActionName := an.Param("Update"); updateActionName != "" {
-		if action, err := ast.FindStructType(pkgDeclr, updateActionName); err == nil && action.Declr != nil {
-			updateAction = action
-		}
-	}
-
 	packageName := fmt.Sprintf("%smgo", strings.ToLower(str.Object.Name.Name))
 	packageFinalPath := filepath.Join(str.Path, toDir, packageName)
 
-	mongoTestGen := gen.Block(
-		gen.Package(
-			gen.Name(fmt.Sprintf("%s_test", packageName)),
-			gen.Imports(
-				gen.Import("os", ""),
-				gen.Import("time", ""),
-				gen.Import("testing", ""),
-				gen.Import("gopkg.in/mgo.v2", "mgo"),
-				gen.Import("github.com/influx6/faux/tests", ""),
-				gen.Import("github.com/influx6/faux/metrics", ""),
-				gen.Import("github.com/influx6/faux/context", ""),
-				gen.Import("github.com/influx6/faux/db/mongo", ""),
-				gen.Import("github.com/influx6/faux/metrics/custom", ""),
-				gen.Import(filepath.Join(str.Path, toDir, packageName), "mdb"),
-				gen.Import(str.Path, ""),
-			),
-			gen.Block(
-				gen.SourceTextWith(
-					string(static.MustReadFile("mongo-api-test.tml", true)),
-					gen.ToTemplateFuncs(
-						ast.ASTTemplatFuncs,
-						template.FuncMap{
-							"map":       ast.MapOutFields,
-							"mapValues": ast.MapOutValues,
-							"hasFunc":   pkgDeclr.HasFunctionFor,
-						},
-					),
-					struct {
-						Pkg          *ast.PackageDeclaration
-						Struct       ast.StructDeclaration
-						CreateAction ast.StructDeclaration
-						UpdateAction ast.StructDeclaration
-					}{
-						Pkg:          &pkgDeclr,
-						Struct:       str,
-						CreateAction: createAction,
-						UpdateAction: updateAction,
-					},
-				),
-			),
-		),
-	)
+	//mongoTestGen := gen.Block(
+	//	gen.Package(
+	//		gen.Name(fmt.Sprintf("%s_test", packageName)),
+	//		gen.Imports(
+	//			gen.Import("os", ""),
+	//			gen.Import("time", ""),
+	//			gen.Import("testing", ""),
+	//			gen.Import("gopkg.in/mgo.v2", "mgo"),
+	//			gen.Import("github.com/influx6/faux/tests", ""),
+	//			gen.Import("github.com/influx6/faux/metrics", ""),
+	//			gen.Import("github.com/influx6/faux/context", ""),
+	//			gen.Import("github.com/influx6/faux/db/mongo", ""),
+	//			gen.Import("github.com/influx6/faux/metrics/custom", ""),
+	//			gen.Import(filepath.Join(str.Path, toDir, packageName), "mdb"),
+	//			gen.Import(str.Path, ""),
+	//		),
+	//		gen.Block(
+	//			gen.SourceTextWith(
+	//				string(static.MustReadFile("mongo-api-test.tml", true)),
+	//				gen.ToTemplateFuncs(
+	//					ast.ASTTemplatFuncs,
+	//					template.FuncMap{
+	//						"map":       ast.MapOutFields,
+	//						"mapValues": ast.MapOutValues,
+	//						"hasFunc":   pkgDeclr.HasFunctionFor,
+	//					},
+	//				),
+	//				struct {
+	//					Pkg          *ast.PackageDeclaration
+	//					Struct       ast.StructDeclaration
+	//				}{
+	//					Pkg:          &pkgDeclr,
+	//					Struct:       str,
+	//				},
+	//			),
+	//		),
+	//	),
+	//)
 
 	mongoReadmeGen := gen.Block(
 		gen.Block(
@@ -123,8 +104,6 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 					PackageName:  packageName,
 					Pkg:          &pkgDeclr,
 					Struct:       str,
-					CreateAction: createAction,
-					UpdateAction: updateAction,
 				},
 			),
 		),
@@ -132,7 +111,7 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 
 	mongoJSONGen := gen.Block(
 		gen.Package(
-			gen.Name(fmt.Sprintf("%s_test", packageName)),
+			gen.Name("fixtures"),
 			gen.Imports(
 				gen.Import("encoding/json", ""),
 				gen.Import(str.Path, ""),
@@ -152,13 +131,9 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 					struct {
 						Pkg          *ast.PackageDeclaration
 						Struct       ast.StructDeclaration
-						CreateAction ast.StructDeclaration
-						UpdateAction ast.StructDeclaration
 					}{
 						Pkg:          &pkgDeclr,
 						Struct:       str,
-						CreateAction: createAction,
-						UpdateAction: updateAction,
 					},
 				),
 			),
@@ -185,13 +160,9 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 					struct {
 						Pkg          *ast.PackageDeclaration
 						Struct       ast.StructDeclaration
-						CreateAction ast.StructDeclaration
-						UpdateAction ast.StructDeclaration
 					}{
 						Pkg:          &pkgDeclr,
 						Struct:       str,
-						CreateAction: createAction,
-						UpdateAction: updateAction,
 					},
 				),
 			),
@@ -226,13 +197,9 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 					struct {
 						Pkg          *ast.PackageDeclaration
 						Struct       ast.StructDeclaration
-						CreateAction ast.StructDeclaration
-						UpdateAction ast.StructDeclaration
 					}{
 						Pkg:          &pkgDeclr,
 						Struct:       str,
-						CreateAction: createAction,
-						UpdateAction: updateAction,
 					},
 				),
 			),
@@ -244,13 +211,6 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 			Writer:   mongoReadmeGen,
 			FileName: "README.md",
 			Dir:      packageName,
-			// DontOverride: true,
-		},
-		{
-			Writer:   fmtwriter.New(mongoTestGen, true, true),
-			FileName: fmt.Sprintf("%s_test.go", packageName),
-			Dir:      packageName,
-			// DontOverride: true,
 		},
 		{
 			Writer:       fmtwriter.New(mongoBackendGen, true, true),
@@ -262,12 +222,11 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 			Writer:   fmtwriter.New(mongoGen, true, true),
 			FileName: fmt.Sprintf("%s.go", packageName),
 			Dir:      packageName,
-			// DontOverride: true,
 		},
 		{
 			Writer:       mongoJSONGen,
-			FileName:     fmt.Sprintf("%s_fixtures_test.go", packageName),
-			Dir:          packageName,
+			FileName:     fmt.Sprintf("%s_fixtures.go", packageName),
+			Dir:          filepath.Join(packageName, "fixtures"),
 			DontOverride: true,
 		},
 	}, nil

@@ -217,7 +217,7 @@ func (mdb *{{.Struct.Object.Name}}DB) Create(ctx context.Context, elem {{.Struct
 
         mdb.metrics.Emit(metrics.Info("Create record"),metrics.With("collection", mdb.col),metrics.With("elem", elem))
     {{else}}
-        query := bson.M({{ map .CreateAction "elem" "bson" "json" }})
+        query := bson.M({{ map .Struct "elem" "bson" "json" }})
 
         if err := database.C(mdb.col).Insert(query); err != nil {
             mdb.metrics.Emit(metrics.Errorf("Failed to create {{.Struct.Object.Name}} record"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("error", err.Error()))
@@ -591,7 +591,7 @@ func (mdb *{{.Struct.Object.Name}}DB) Update(ctx context.Context, publicID strin
             metrics.With("public_id", publicID),
         )
     {{else}}
-        queryData := bson.M({{ map .CreateAction "elem" "bson" "json" }})
+        queryData := bson.M({{ map .Struct "elem" "bson" "json" }})
         if err := database.C(mdb.col).Update(query, queryData); err != nil {
             mdb.metrics.Emit(metrics.Errorf("Failed to update {{.Struct.Object.Name}} record"),metrics.With("collection", mdb.col),metrics.With("query", query),metrics.With("data", queryData),metrics.With("public_id", publicID),metrics.With("error", err.Error()))
             if err == mgo.ErrNotFound {
