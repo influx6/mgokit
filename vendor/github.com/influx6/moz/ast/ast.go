@@ -2403,7 +2403,7 @@ func RandomDataTypeValueWithName(typeName string, varName string) string {
 		case "year":
 			return fmt.Sprintf("%d", fake.Year(1998, 10000))
 		default:
-			return fmt.Sprintf("%d", rand.Int63())
+			return fmt.Sprintf("%d", rand.Int63n(20))
 		}
 	default:
 		return DefaultTypeValueString(typeName)
