@@ -976,8 +976,10 @@ type FieldDeclaration struct {
 func GetFields(str StructDeclaration, pkg *PackageDeclaration) []FieldDeclaration {
 	var fields []FieldDeclaration
 
+	var counter int
 	for _, item := range str.Struct.Fields.List {
-		arg, err := GetArgTypeFromField("var", pkg.File, item, pkg)
+		counter++
+		arg, err := GetArgTypeFromField(counter, "var", pkg.File, item, pkg)
 		if err != nil {
 			continue
 		}
@@ -1088,9 +1090,7 @@ func GetIdentName(field *ast.Field) (*ast.Ident, error) {
 
 // GetArgTypeFromField returns a ArgType that writes out the representation of the giving variable name or decleration ast.Field
 // associated with the giving package. It returns an error if it does not know the type.
-func GetArgTypeFromField(varPrefix string, targetFile string, result *ast.Field, pkg *PackageDeclaration) (ArgType, error) {
-	var retCounter int
-
+func GetArgTypeFromField(retCounter int, varPrefix string, targetFile string, result *ast.Field, pkg *PackageDeclaration) (ArgType, error) {
 	var tags []TagDeclaration
 
 	if result.Tag != nil {
@@ -1116,13 +1116,13 @@ func GetArgTypeFromField(varPrefix string, targetFile string, result *ast.Field,
 
 	switch iobj := result.Type.(type) {
 	case *ast.Ident:
+
 		var nameObj *ast.Object
 
 		var name string
 		resName, err := GetIdentName(result)
 		switch err != nil {
 		case true:
-			retCounter++
 			name = fmt.Sprintf("%s%d", varPrefix, retCounter)
 		case false:
 			name = resName.Name
@@ -1155,6 +1155,7 @@ func GetArgTypeFromField(varPrefix string, targetFile string, result *ast.Field,
 		return arg, nil
 
 	case *ast.SelectorExpr:
+
 		xobj, ok := iobj.X.(*ast.Ident)
 		if !ok {
 			return ArgType{}, errors.New("Saw ast.SelectorExpr but X is not an *ast.Ident type")
@@ -1164,8 +1165,6 @@ func GetArgTypeFromField(varPrefix string, targetFile string, result *ast.Field,
 		if err != nil {
 			return ArgType{}, err
 		}
-
-		retCounter++
 
 		var name string
 		resName, err := GetIdentName(result)
@@ -1218,7 +1217,6 @@ func GetArgTypeFromField(varPrefix string, targetFile string, result *ast.Field,
 		return arg, nil
 
 	case *ast.StarExpr:
-		retCounter++
 
 		var name string
 		resName, err := GetIdentName(result)
@@ -1312,7 +1310,6 @@ func GetArgTypeFromField(varPrefix string, targetFile string, result *ast.Field,
 		return arg, nil
 
 	case *ast.MapType:
-		retCounter++
 
 		var name string
 		resName, err := GetIdentName(result)
@@ -1348,7 +1345,6 @@ func GetArgTypeFromField(varPrefix string, targetFile string, result *ast.Field,
 
 		return arg, nil
 	case *ast.ArrayType:
-		retCounter++
 
 		var name string
 		resName, err := GetIdentName(result)
@@ -1440,7 +1436,6 @@ func GetArgTypeFromField(varPrefix string, targetFile string, result *ast.Field,
 		return arg, nil
 
 	case *ast.ChanType:
-		retCounter++
 
 		var name string
 		resName, err := GetIdentName(result)
@@ -1523,8 +1518,10 @@ func GetFunctionDefinitionFromField(method *ast.Field, pkg *PackageDeclaration) 
 	var arguments, returns []ArgType
 
 	if ftype.Results != nil {
+		var retCounter int
 		for _, result := range ftype.Results.List {
-			arg, err := GetArgTypeFromField("ret", pkg.File, result, pkg)
+			retCounter++
+			arg, err := GetArgTypeFromField(retCounter, "ret", pkg.File, result, pkg)
 			if err != nil {
 				return FunctionDefinition{}, err
 			}
@@ -1534,8 +1531,10 @@ func GetFunctionDefinitionFromField(method *ast.Field, pkg *PackageDeclaration) 
 	}
 
 	if ftype.Params != nil {
+		var varCounter int
 		for _, param := range ftype.Params.List {
-			arg, err := GetArgTypeFromField("var", pkg.File, param, pkg)
+			varCounter++
+			arg, err := GetArgTypeFromField(varCounter, "var", pkg.File, param, pkg)
 			if err != nil {
 				return FunctionDefinition{}, err
 			}
@@ -1556,8 +1555,10 @@ func GetFunctionDefinitionFromDeclaration(funcObj FuncDeclaration, pkg *PackageD
 	var arguments, returns []ArgType
 
 	if funcObj.Type.Results != nil {
+		var retCounter int
 		for _, result := range funcObj.Type.Results.List {
-			arg, err := GetArgTypeFromField("ret", funcObj.File, result, pkg)
+			retCounter++
+			arg, err := GetArgTypeFromField(retCounter, "ret", funcObj.File, result, pkg)
 			if err != nil {
 				return FunctionDefinition{}, err
 			}
@@ -1568,8 +1569,10 @@ func GetFunctionDefinitionFromDeclaration(funcObj FuncDeclaration, pkg *PackageD
 	}
 
 	if funcObj.Type.Params != nil {
+		var varCounter int
 		for _, param := range funcObj.Type.Params.List {
-			arg, err := GetArgTypeFromField("var", funcObj.File, param, pkg)
+			varCounter++
+			arg, err := GetArgTypeFromField(varCounter, "var", funcObj.File, param, pkg)
 			if err != nil {
 				return FunctionDefinition{}, err
 			}
@@ -2249,12 +2252,66 @@ func MapOutFieldsValues(item StructDeclaration, onlyExported bool, name *gen.Nam
 
 // RandomFieldValue returns the default value for a giving field.
 func RandomFieldValue(fld FieldDeclaration) string {
-	return RandomDataTypeValue(fld.FieldTypeName)
+	return RandomDataTypeValueWithName(fld.FieldTypeName, fld.FieldName)
 }
 
 // DefaultFieldValue returns the default value for a giving field.
 func DefaultFieldValue(fld FieldDeclaration) string {
 	return DefaultTypeValueString(fld.FieldTypeName)
+}
+
+// RandomDataTypeValueWithName returns the default value string of a giving
+// typeName.
+func RandomDataTypeValueWithName(typeName string, varName string) string {
+	switch typeName {
+	case "time.Time":
+		return time.Now().UTC().String()
+	case "uint", "uint32", "uint64":
+		return fmt.Sprintf("%d", rand.Uint64())
+	case "bool":
+		return fmt.Sprintf("%t", rand.Int63n(1) == 0)
+	case "string":
+		switch strings.ToLower(varName) {
+		case "location", "location_address", "location_addr":
+			return fmt.Sprintf("%q", fake.Street())
+		case "company", "company_name", "companyname":
+			return fmt.Sprintf("%q", fake.Company())
+		case "subject", "subject_name", "subjectname":
+			return fmt.Sprintf("%q", fake.EmailSubject())
+		case "email", "email_address", "emailaddress":
+			return fmt.Sprintf("%q", fake.EmailAddress())
+		case "addr","address","street_address", "main_address", "mainaddress","streetaddress":
+			return fmt.Sprintf("%q", fake.StreetAddress())
+		case "companyaddress","company_address":
+			return fmt.Sprintf("%q", fake.StreetAddress())
+		case "first_name", "firstname":
+			return fmt.Sprintf("%q", fake.FirstName())
+		case "last_name", "lastname":
+			return fmt.Sprintf("%q", fake.LastName())
+		case "name","fullname", "full_name":
+			return fmt.Sprintf("%q", fake.FullName())
+		case "private_id", "privateid":
+			return fmt.Sprintf("%q", fake.CharactersN(15))
+		case "public_id", "publicid":
+			return fmt.Sprintf("%q", fake.CharactersN(15))
+		case "creditcardnum", "credit_card_number", "credit_card_num":
+			return fmt.Sprintf("%q", fake.CreditCardNum(fake.CreditCardType()))
+		case "creditcard", "credit_card":
+			return fmt.Sprintf("%q", fake.CreditCardNum(fake.CreditCardType()))
+		default:
+			return fmt.Sprintf("%q", fake.Character())
+		}
+	case "rune":
+		return fmt.Sprintf("'%x'", fake.CharactersN(1))
+	case "byte":
+		return fmt.Sprintf("'%x'", fake.CharactersN(1))
+	case "float32", "float64":
+		return fmt.Sprintf("%.4f", rand.Float64())
+	case "int", "int32", "int64":
+		return fmt.Sprintf("%d", rand.Int63())
+	default:
+		return DefaultTypeValueString(typeName)
+	}
 }
 
 // RandomDataTypeValue returns the default value string of a giving
@@ -2268,7 +2325,7 @@ func RandomDataTypeValue(typeName string) string {
 	case "bool":
 		return fmt.Sprintf("%t", rand.Int63n(1) == 0)
 	case "string":
-		return fmt.Sprintf("%q", fake.FullName())
+		return fmt.Sprintf("%q", fake.Character())
 	case "rune":
 		return fmt.Sprintf("'%x'", fake.CharactersN(1))
 	case "byte":
