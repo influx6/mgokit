@@ -1,0 +1,32 @@
+<html>
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta property="og:title" content="{{.Name}}">
+  <meta property="og:description" content="App:{{.Name}}">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="{{.Name}}">
+  <meta name="twitter:description" content="App:{{.Name}}">
+  <link rel="apple-touch-icon-precomposed" href="assets/img/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="assets/img/icons/favicon.png" >
+  <link href="https://fonts.googleapis.com/css?family=Monoton|Noto+Sans|Noto+Serif|Roboto|Roboto+Condensed|Roboto+Mono" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/base.css">
+  <link rel="stylesheet" href="/static/css/flash.css">
+  <link rel="stylesheet" href="/static/css/main.css">
+  {{template "styles" .}}
+  {{template "beforescripts" .}}
+  </head>
+  <body>
+    {{.FlashTemplate}}
+    {{ template "content" .}}
+    <script type="text/javascript" src="/static/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/js/flash.js"></script>
+    <script type="text/javascript" src="/static/js/main.js"></script>
+    {{template "afterscripts" .}}
+  </body>
+<html>
+{{define "nav"}}{{end}}
+{{define "content"}}{{end}}
+{{define "styles"}}{{end}}
+{{define "beforescripts"}}{{end}}
+{{define "afterscripts"}}{{end}}

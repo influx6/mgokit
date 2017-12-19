@@ -1,0 +1,21 @@
+# .settings contains all settings related to the project and it's building of
+# assets, themes and files.
+
+# public contains settings related to the directory used for public assets which
+# will be built and servable using the generated package.
+
+app = {{quote .Name}}
+package = {{quote .Package}}
+
+[static]
+indexDir = "./public" # sets where index.html will be located
+jsFile = "{{lower .Name}}_app_bundle.js"
+jsMapFile = "{{lower .Name}}_app_bundle.js.map"
+
+[public]
+path = "./public"
+packageName = {{lower .Name | quote}}
+
+[theme]
+PrimaryBrandColor = "#222222"
+SecondaryBrandColor = "#444444"

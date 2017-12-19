@@ -1,0 +1,620 @@
+.hide {
+  display:none;
+}
+
+.ghost {
+  visibility: hide;
+}
+
+.show {
+  display: block;
+}
+
+.show-inline {
+  display: inline;
+}
+
+.show-inline-block {
+  display: inline-block;
+}
+
+.right-aligned{
+  text-align: right;
+}
+
+.left-aligned{
+  text-align: left;
+}
+
+.center-aligned{
+  text-align: center;
+}
+
+.top-vertical-align{
+  vertical-align: top;
+}
+
+.bottom-vertical-align{
+  vertical-align: bottom;
+}
+
+.center-vertical-align{
+  vertical-align: center;
+}
+
+.block {
+  display: inline-block;
+  vertical-align: top;
+  letter-spacing: normal;
+  word-spacing: normal;
+  position: relative;
+}
+
+.border-box {
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -o-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+}
+
+.relative{
+  position: relative;
+}
+.one-whole {
+  width: 100%;
+}
+.one-half {
+  width: 50%;
+}
+.one-third {
+  width: 33.33333333%;
+}
+.two-third {
+  width: 66.66666667%;
+}
+.one-quarter {
+  width: 25%;
+}
+.two-quarter {
+  width: 50%;
+}
+.three-quarter {
+  width: 75%;
+}
+.one-fifth {
+  width: 20%;
+}
+.two-fifth {
+  width: 40%;
+}
+.three-fifth {
+  width: 60%;
+}
+.four-fifth {
+  width: 80%;
+}
+.one-sixth {
+  width: 16.66666667%;
+}
+.two-sixth {
+  width: 33.33333333%;
+}
+.three-sixth {
+  width: 50%;
+}
+.four-sixth {
+  width: 66.66666667%;
+}
+.five-sixth {
+  width: 83.33333333%;
+}
+.one-eight {
+  width: 12.5%;
+}
+.two-eight {
+  width: 25%;
+}
+.three-eight {
+  width: 37.5%;
+}
+.four-eight {
+  width: 50%;
+}
+.five-eight {
+  width: 62.5%;
+}
+.six-eight {
+  width: 75%;
+}
+.seven-eight {
+  width: 87.5%;
+}
+.one-tenth {
+  width: 10%;
+}
+.two-tenth {
+  width: 20%;
+}
+.three-tenth {
+  width: 30%;
+}
+.four-tenth {
+  width: 40%;
+}
+.five-tenth {
+  width: 50%;
+}
+.six-tenth {
+  width: 60%;
+}
+.seventh-tenth {
+  width: 70%;
+}
+.eight-tenth {
+  width: 80%;
+}
+.nine-tenth {
+  width: 90%;
+}
+.one-twelveth {
+  width: 8.33333333%;
+}
+.two-twelveth {
+  width: 16.66666667%;
+}
+.three-twelveth {
+  width: 25%;
+}
+.four-twelveth {
+  width: 33.33333333%;
+}
+.five-twelveth {
+  width: 41.66666667%;
+}
+.six-twelveth {
+  width: 50%;
+}
+.seventh-twelveth {
+  width: 58.33333333%;
+}
+.eight-twelveth {
+  width: 66.66666667%;
+}
+.nine-twelveth {
+  width: 75%;
+}
+.ten-twelveth {
+  width: 83.33333333%;
+}
+.eleven-twelveth {
+  width: 91.66666667%;
+}
+.one-twenthy {
+  width: 5%;
+}
+.two-twenthy {
+  width: 10%;
+}
+.three-twenthy {
+  width: 15%;
+}
+.four-twenthy {
+  width: 20%;
+}
+.five-twenthy {
+  width: 25%;
+}
+.six-twenthy {
+  width: 30%;
+}
+.seventh-twenthy {
+  width: 35%;
+}
+.eight-twenthy {
+  width: 40%;
+}
+.nine-twenthy {
+  width: 45%;
+}
+.ten-twenthy {
+  width: 50%;
+}
+.eleven-twenthy {
+  width: 55%;
+}
+.twelve-twenthy {
+  width: 60%;
+}
+.thirteen-twenthy {
+  width: 65%;
+}
+.fourteen-twenthy {
+  width: 70%;
+}
+.fifteen-twenthy {
+  width: 75%;
+}
+.sixteen-twenthy {
+  width: 80%;
+}
+.seventeen-twenthy {
+  width: 85%;
+}
+.eighten-twenthy {
+  width: 90%;
+}
+.ninteen-twenthy {
+  width: 95%;
+}
+.push-one-whole {
+  left: 100%;
+}
+.push-one-half {
+  left: 50%;
+}
+.push-one-third {
+  left: 33.33333333%;
+}
+.push-two-third {
+  left: 66.66666667%;
+}
+.push-one-quarter {
+  left: 25%;
+}
+.push-two-quarter {
+  left: 50%;
+}
+.push-three-quarter {
+  left: 75%;
+}
+.push-one-fifth {
+  left: 20%;
+}
+.push-two-fifth {
+  left: 40%;
+}
+.push-three-fifth {
+  left: 60%;
+}
+.push-four-fifth {
+  left: 80%;
+}
+.push-one-sixth {
+  left: 16.66666667%;
+}
+.push-two-sixth {
+  left: 33.33333333%;
+}
+.push-three-sixth {
+  left: 50%;
+}
+.push-four-sixth {
+  left: 66.66666667%;
+}
+.push-five-sixth {
+  left: 83.33333333%;
+}
+.push-one-eight {
+  left: 12.5%;
+}
+.push-two-eight {
+  left: 25%;
+}
+.push-three-eight {
+  left: 37.5%;
+}
+.push-four-eight {
+  left: 50%;
+}
+.push-five-eight {
+  left: 62.5%;
+}
+.push-six-eight {
+  left: 75%;
+}
+.push-seven-eight {
+  left: 87.5%;
+}
+.push-one-tenth {
+  left: 10%;
+}
+.push-two-tenth {
+  left: 20%;
+}
+.push-three-tenth {
+  left: 30%;
+}
+.push-four-tenth {
+  left: 40%;
+}
+.push-five-tenth {
+  left: 50%;
+}
+.push-six-tenth {
+  left: 60%;
+}
+.push-seventh-tenth {
+  left: 70%;
+}
+.push-eight-tenth {
+  left: 80%;
+}
+.push-nine-tenth {
+  left: 90%;
+}
+.push-one-twelveth {
+  left: 8.33333333%;
+}
+.push-two-twelveth {
+  left: 16.66666667%;
+}
+.push-three-twelveth {
+  left: 25%;
+}
+.push-four-twelveth {
+  left: 33.33333333%;
+}
+.push-five-twelveth {
+  left: 41.66666667%;
+}
+.push-six-twelveth {
+  left: 50%;
+}
+.push-seventh-twelveth {
+  left: 58.33333333%;
+}
+.push-eight-twelveth {
+  left: 66.66666667%;
+}
+.push-nine-twelveth {
+  left: 75%;
+}
+.push-ten-twelveth {
+  left: 83.33333333%;
+}
+.push-eleven-twelveth {
+  left: 91.66666667%;
+}
+.push-one-twenthy {
+  right: 8.33333333%;
+}
+.push-two-twenthy {
+  right: 16.66666667%;
+}
+.push-three-twenthy {
+  right: 25%;
+}
+.push-four-twenthy {
+  right: 33.33333333%;
+}
+.push-five-twenthy {
+  right: 41.66666667%;
+}
+.push-six-twenthy {
+  right: 50%;
+}
+.push-seventh-twenthy {
+  right: 58.33333333%;
+}
+.push-eight-twenthy {
+  right: 66.66666667%;
+}
+.push-nine-twenthy {
+  right: 75%;
+}
+.push-ten-twenthy {
+  right: 83.33333333%;
+}
+.push-eleven-twenthy {
+  right: 91.66666667%;
+}
+.push-twelve-twenthy {
+  right: 91.66666667%;
+}
+.push-thirteen-twenthy {
+  right: 91.66666667%;
+}
+.push-fourteen-twenthy {
+  right: 91.66666667%;
+}
+.push-fifteen-twenthy {
+  right: 91.66666667%;
+}
+.push-sixteen-twenthy {
+  right: 91.66666667%;
+}
+.push-seventeen-twenthy {
+  right: 91.66666667%;
+}
+.push-eighteen-twenthy {
+  right: 91.66666667%;
+}
+.push-ninteen-twenthy {
+  right: 91.66666667%;
+}
+.pull-one-whole {
+  right: 100%;
+}
+.pull-one-half {
+  right: 50%;
+}
+.pull-one-third {
+  right: 33.33333333%;
+}
+.pull-two-third {
+  right: 66.66666667%;
+}
+.pull-one-quarter {
+  right: 25%;
+}
+.pull-two-quarter {
+  right: 50%;
+}
+.pull-three-quarter {
+  right: 75%;
+}
+.pull-one-fifth {
+  right: 20%;
+}
+.pull-two-fifth {
+  right: 40%;
+}
+.pull-three-fifth {
+  right: 60%;
+}
+.pull-four-fifth {
+  right: 80%;
+}
+.pull-one-sixth {
+  right: 16.66666667%;
+}
+.pull-two-sixth {
+  right: 33.33333333%;
+}
+.pull-three-sixth {
+  right: 50%;
+}
+.pull-four-sixth {
+  right: 66.66666667%;
+}
+.pull-five-sixth {
+  right: 83.33333333%;
+}
+.pull-one-eight {
+  right: 12.5%;
+}
+.pull-two-eight {
+  right: 25%;
+}
+.pull-three-eight {
+  right: 37.5%;
+}
+.pull-four-eight {
+  right: 50%;
+}
+.pull-five-eight {
+  right: 62.5%;
+}
+.pull-six-eight {
+  right: 75%;
+}
+.pull-seven-eight {
+  right: 87.5%;
+}
+.pull-one-tenth {
+  right: 10%;
+}
+.pull-two-tenth {
+  right: 20%;
+}
+.pull-three-tenth {
+  right: 30%;
+}
+.pull-four-tenth {
+  right: 40%;
+}
+.pull-five-tenth {
+  right: 50%;
+}
+.pull-six-tenth {
+  right: 60%;
+}
+.pull-seventh-tenth {
+  right: 70%;
+}
+.pull-eight-tenth {
+  right: 80%;
+}
+.pull-nine-tenth {
+  right: 90%;
+}
+.pull-one-twelveth {
+  right: 8.33333333%;
+}
+.pull-two-twelveth {
+  right: 16.66666667%;
+}
+.pull-three-twelveth {
+  right: 25%;
+}
+.pull-four-twelveth {
+  right: 33.33333333%;
+}
+.pull-five-twelveth {
+  right: 41.66666667%;
+}
+.pull-six-twelveth {
+  right: 50%;
+}
+.pull-seventh-twelveth {
+  right: 58.33333333%;
+}
+.pull-eight-twelveth {
+  right: 66.66666667%;
+}
+.pull-nine-twelveth {
+  right: 75%;
+}
+.pull-ten-twelveth {
+  right: 83.33333333%;
+}
+.pull-eleven-twelveth {
+  right: 91.66666667%;
+}
+.pull-one-twenthy {
+  right: 8.33333333%;
+}
+.pull-two-twenthy {
+  right: 16.66666667%;
+}
+.pull-three-twenthy {
+  right: 25%;
+}
+.pull-four-twenthy {
+  right: 33.33333333%;
+}
+.pull-five-twenthy {
+  right: 41.66666667%;
+}
+.pull-six-twenthy {
+  right: 50%;
+}
+.pull-seventh-twenthy {
+  right: 58.33333333%;
+}
+.pull-eight-twenthy {
+  right: 66.66666667%;
+}
+.pull-nine-twenthy {
+  right: 75%;
+}
+.pull-ten-twenthy {
+  right: 83.33333333%;
+}
+.pull-eleven-twenthy {
+  right: 91.66666667%;
+}
+.pull-twelve-twenthy {
+  right: 91.66666667%;
+}
+.pull-thirteen-twenthy {
+  right: 91.66666667%;
+}
+.pull-fourteen-twenthy {
+  right: 91.66666667%;
+}
+.pull-fifteen-twenthy {
+  right: 91.66666667%;
+}
+.pull-sixteen-twenthy {
+  right: 91.66666667%;
+}
+.pull-seventeen-twenthy {
+  right: 91.66666667%;
+}
+.pull-eighteen-twenthy {
+  right: 91.66666667%;
+}
+.pull-ninteen-twenthy {
+  right: 91.66666667%;
+}
