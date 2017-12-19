@@ -1,7 +1,7 @@
-// {{.Struct.Object.Name}}Backend defines a backend which represents the giving 
+// {{.Struct.Object.Name}}DBBackend defines a backend which represents the giving
 // methods exposed by the DB implementation for the giving type {{.Struct.Object.Name}}.
 // @implement
-type {{.Struct.Object.Name}}Backend interface{
+type {{.Struct.Object.Name}}DBBackend interface{
   Delete(ctx context.Context, publicID string) error
   Create(ctx context.Context, elem {{.Struct.Package}}.{{.Struct.Object.Name}}) error 
   Get(ctx context.Context, publicID string)  ({{.Struct.Package}}.{{.Struct.Object.Name}},  error)
