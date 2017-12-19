@@ -20,7 +20,7 @@ func TestGet{{.Struct.Object.Name}}(t *testing.T){
 
     ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
 
-    elem, err := loadJSONFor({{lower .Struct.Object.Name.Name}}CreateJSON)
+    elem, err := Load{{.Struct.Object.Name.Name}}JSON({{lower .Struct.Object.Name.Name}}CreateJSON)
     if err != nil {
         tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
     }
@@ -47,7 +47,7 @@ func TestGetAll{{.Struct.Object.Name}}(t *testing.T){
 
     ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
 
-    elem, err := loadJSONFor({{lower .Struct.Object.Name.Name}}CreateJSON)
+    elem, err := Load{{.Struct.Object.Name.Name}}JSON({{lower .Struct.Object.Name.Name}}CreateJSON)
     if err != nil {
         tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
     }
@@ -79,7 +79,7 @@ func TestGetAll{{.Struct.Object.Name}}ByOrder(t *testing.T){
 
     ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
 
-    elem, err := loadJSONFor({{lower .Struct.Object.Name.Name}}CreateJSON)
+    elem, err := Load{{.Struct.Object.Name.Name}}JSON({{lower .Struct.Object.Name.Name}}CreateJSON)
     if err != nil {
         tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
     }
@@ -111,7 +111,7 @@ func Test{{.Struct.Object.Name}}Create(t *testing.T){
 
     ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
 
-    elem, err := loadJSONFor({{lower .Struct.Object.Name.Name}}CreateJSON)
+    elem, err := Load{{.Struct.Object.Name.Name}}JSON({{lower .Struct.Object.Name.Name}}CreateJSON)
     if err != nil {
         tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
     }
@@ -132,7 +132,7 @@ func Test{{.Struct.Object.Name}}Update(t *testing.T){
 
     ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
 
-    elem, err := loadJSONFor({{lower .Struct.Object.Name.Name}}CreateJSON)
+    elem, err := Load{{.Struct.Object.Name.Name}}JSON({{lower .Struct.Object.Name.Name}}CreateJSON)
     if err != nil {
         tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
     }
@@ -145,7 +145,7 @@ func Test{{.Struct.Object.Name}}Update(t *testing.T){
     }
     tests.Passed("Successfully added record for {{.Struct.Object.Name}} into db.")
 
-    //TODO: Update something.
+    {{ randField .Struct "elem" "json" "public_id" }}
 
     if err := api.Update(ctx, elem.PublicID, elem); err != nil {
         tests.Failed("Successfully updated record for {{.Struct.Object.Name}} into db: %+q.", err)
@@ -160,7 +160,7 @@ func Test{{.Struct.Object.Name}}Delete(t *testing.T){
 
     ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
 
-    elem, err := loadJSONFor({{lower .Struct.Object.Name.Name}}CreateJSON)
+    elem, err := Load{{.Struct.Object.Name.Name}}JSON({{lower .Struct.Object.Name.Name}}CreateJSON)
     if err != nil {
         tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
     }
@@ -175,4 +175,9 @@ func Test{{.Struct.Object.Name}}Delete(t *testing.T){
         tests.Failed("Successfully removed record for {{.Struct.Object.Name}} into db: %+q.", err)
     }
     tests.Passed("Successfully removed record for {{.Struct.Object.Name}} into db.")
+
+    if _, err = api.Get(ctx, elem.PublicID; err == nil {
+        tests.Failed("Successfully failed to get deleted record for {{.Struct.Object.Name}} into db.")
+    }
+    tests.Passed("Successfully failed to get deleted record for {{.Struct.Object.Name}} into db.")
 }

@@ -4,8 +4,30 @@ var {{lower .Struct.Object.Name.Name}}CreateJSON = `{{ mapJSON .CreateAction "bs
 
 var {{lower .Struct.Object.Name.Name}}UpdateJSON = `{{ mapJSON .UpdateAction "bson" "json" }}`
 
-// loadJSONFor returns a new instance of a {{.Struct.Package}}.{{.Struct.Object.Name}} from the provide json content.
-func loadJSONFor(content string) ({{.Struct.Package}}.{{.Struct.Object.Name}}, error) {
+// LoadCreateJSON returns a new instance of a {{.CreateAction.Package}}.{{.CreateAction.Object.Name}}.
+func LoadCreateJSON(content string) ({{.CreateAction.Package}}.{{.CreateAction.Object.Name}}, error) {
+	var elem {{.CreateAction.Package}}.{{.CreateAction.Object.Name}}
+
+	if err := json.Unmarshal([]byte(content), &elem); err != nil {
+		return {{.CreateAction.Package}}.{{.CreateAction.Object.Name}}{}, err
+	}
+
+	return elem, nil
+}
+
+// LoadUpdateJSON returns a new instance of a {{.UpdateAction.Package}}.{{.UpdateAction.Object.Name}}.
+func LoadUpdateJSON(content string) ({{.UpdateAction.Package}}.{{.UpdateAction.Object.Name}}, error) {
+	var elem {{.UpdateAction.Package}}.{{.UpdateAction.Object.Name}}
+
+	if err := json.Unmarshal([]byte(content), &elem); err != nil {
+		return {{.UpdateAction.Package}}.{{.UpdateAction.Object.Name}}{}, err
+	}
+
+	return elem, nil
+}
+
+// Load{{.Struct.Object.Name.Name}}JSON returns a new instance of a {{.Struct.Package}}.{{.Struct.Object.Name}}.
+func Load{{.Struct.Object.Name.Name}}JSON(content string) ({{.Struct.Package}}.{{.Struct.Object.Name}}, error) {
 	var elem {{.Struct.Package}}.{{.Struct.Object.Name}}
 
 	if err := json.Unmarshal([]byte(content), &elem); err != nil {
@@ -14,3 +36,4 @@ func loadJSONFor(content string) ({{.Struct.Package}}.{{.Struct.Object.Name}}, e
 
 	return elem, nil
 }
+
