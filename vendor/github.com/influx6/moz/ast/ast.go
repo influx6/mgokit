@@ -2343,6 +2343,16 @@ func RandomDataTypeValueWithName(typeName string, varName string) string {
 		return fmt.Sprintf("%t", rand.Int63n(1) == 0)
 	case "string":
 		switch strings.ToLower(varName) {
+		case "username", "user_name", "login_name":
+			return fmt.Sprintf("%q", fake.UserName())
+		case "user-agent", "useragent":
+			return fmt.Sprintf("%q", fake.UserAgent())
+		case "domain", "url":
+			return fmt.Sprintf("%q", fake.DomainName())
+		case "zip", "zip_code","zip-code":
+			return fmt.Sprintf("%q", fake.Zip())
+		case "title", "user_title":
+			return fmt.Sprintf("%q", fake.Title())
 		case "day":
 			return fmt.Sprintf("%q", fake.WeekDay())
 		case "week":
@@ -2369,16 +2379,14 @@ func RandomDataTypeValueWithName(typeName string, varName string) string {
 			return fmt.Sprintf("%q", fake.LastName())
 		case "name","fullname", "full_name":
 			return fmt.Sprintf("%q", fake.FullName())
-		case "private_id", "privateid":
-			return fmt.Sprintf("%q", fake.CharactersN(15))
-		case "public_id", "publicid":
-			return fmt.Sprintf("%q", fake.CharactersN(15))
+		case "public_id", "publicid", "private_id", "privateid","user_id","tenant_user_id", "tenant_id", "user_tenant_id":
+			return fmt.Sprintf("%q", fake.CharactersN(30))
 		case "creditcardnum", "credit_card_number", "credit_card_num":
 			return fmt.Sprintf("%q", fake.CreditCardNum(fake.CreditCardType()))
 		case "creditcard", "credit_card":
 			return fmt.Sprintf("%q", fake.CreditCardNum(fake.CreditCardType()))
 		default:
-			return fmt.Sprintf("%q", fake.Character())
+			return fmt.Sprintf("%q", fake.CharactersN(20))
 		}
 	case "rune":
 		return fmt.Sprintf("'%x'", fake.CharactersN(1))
