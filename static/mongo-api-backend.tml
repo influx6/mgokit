@@ -6,7 +6,7 @@ type {{.Struct.Object.Name}}DBBackend interface{
   Create(ctx context.Context, elem {{.Struct.Package}}.{{.Struct.Object.Name}}) error 
   Get(ctx context.Context, publicID string)  ({{.Struct.Package}}.{{.Struct.Object.Name}},  error)
   Update(ctx context.Context, publicID string, elem {{.Struct.Package}}.{{.Struct.Object.Name}}) error
-  GetAllByOrder(ctx context.Context, order, orderBy string)  ([]{{.Struct.Package}}.{{.Struct.Object.Name}},  error)
+  GetAllByOrder(ctx context.Context, order string, orderBy string)  ([]{{.Struct.Package}}.{{.Struct.Object.Name}},  error)
   GetByField(ctx context.Context, key string, value interface{})  ({{.Struct.Package}}.{{.Struct.Object.Name}},  error)
   GetAll(ctx context.Context, order string, orderBy string, page int, responsePerPage int)  ([]{{.Struct.Package}}.{{.Struct.Object.Name}},  int, error)
 }
