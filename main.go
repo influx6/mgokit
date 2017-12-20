@@ -34,11 +34,11 @@ func main() {
 				return err
 			}
 
-			currentdir = filepath.Join(currentdir, target)
-
 			if !filepath.IsAbs(dest) {
 				dest = filepath.Join(currentdir, dest)
 			}
+
+			currentdir = filepath.Join(currentdir, target)
 
 			generators := ast.NewAnnotationRegistryWith(logs)
 			generators.Register("mongo", mgo.MongoSolo)
