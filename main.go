@@ -37,6 +37,10 @@ func main() {
 
 			currentdir = filepath.Join(currentdir, target)
 
+			if !filepath.IsAbs(dest) {
+				dest = filepath.Join(currentdir, dest)
+			}
+
 			generators := ast.NewAnnotationRegistryWith(logs)
 			generators.Register("mongo", mgo.MongoSolo)
 			generators.Register("mongoapi", mgo.MongoGen)
@@ -61,23 +65,11 @@ func main() {
 				Name:    "dest",
 				Default: "./",
 				Desc:    "relative destination for package",
-				Validation: func(received string) error {
-					if filepath.IsAbs(received) {
-						return errors.New("only relative paths not absolute allowed")
-					}
-					return nil
-				},
 			},
 			&flags.StringFlag{
 				Name:    "target",
 				Default: "./",
 				Desc:    "-target=./ defines relative path of target for code gen",
-				Validation: func(received string) error {
-					if filepath.IsAbs(received) {
-						return errors.New("only relative paths not absolute allowed")
-					}
-					return nil
-				},
 			},
 		},
 	})

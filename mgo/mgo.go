@@ -14,7 +14,7 @@ import (
 )
 
 // MongoGen generates a mongodb based CRUD api for a struct declaration.
-func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclaration, pkgDeclr ast.PackageDeclaration, pkg ast.Package) ([]gen.WriteDirective, error) {
+func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDeclaration, pkgDeclr ast.PackageDeclaration, pkg ast.Package) ([]gen.WriteDirective, error) {
 	var hasPublicID bool
 
 	// Validate we have a `PublicID` field.
@@ -47,7 +47,7 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 	}
 
 	packageName := fmt.Sprintf("%smgo", strings.ToLower(str.Object.Name.Name))
-	packageFinalPath := filepath.Join(str.Path, toDir, packageName)
+	packageFinalPath := filepath.Join(toPackage, packageName)
 
 	//mongoTestGen := gen.Block(
 	//	gen.Package(
@@ -62,7 +62,7 @@ func MongoGen(toDir string, an ast.AnnotationDeclaration, str ast.StructDeclarat
 	//			gen.Import("github.com/influx6/faux/context", ""),
 	//			gen.Import("github.com/influx6/faux/db/mongo", ""),
 	//			gen.Import("github.com/influx6/faux/metrics/custom", ""),
-	//			gen.Import(filepath.Join(str.Path, toDir, packageName), "mdb"),
+	//			gen.Import(packageFinalPath, "mdb"),
 	//			gen.Import(str.Path, ""),
 	//		),
 	//		gen.Block(

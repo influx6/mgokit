@@ -20,6 +20,7 @@ import (
 	"github.com/influx6/faux/types/actions"
 	"github.com/influx6/faux/types/events"
 	"github.com/influx6/gobuild/build"
+	"github.com/influx6/gobuild/srcpath"
 	"github.com/influx6/moz/gen"
 )
 
@@ -989,10 +990,20 @@ func WriteDirective(log metrics.Metrics, toDir string, doFileOverwrite bool, ite
 }
 
 // ParsePackage takes the provided package declrations parsing all internals with the appropriate generators suited to the type and annotations.
+// Provided toDir must be a absolute path.
 func ParsePackage(toDir string, log metrics.Metrics, provider *AnnotationRegistry, doFileOverwrite bool, pkgDeclrs Package) error {
 	log.Emit(metrics.Info("Begin ParsePackage"), metrics.With("toDir", toDir),
 		metrics.With("overwriter-file", doFileOverwrite),
 		metrics.With("package", pkgDeclrs.Path))
+
+	if !filepath.IsAbs(toDir) {
+		return errors.New("Destination path must be a absolute path directory")
+	}
+
+	toSrcPath, err := srcpath.RelativeToSrc(toDir)
+	if err != nil {
+		return fmt.Errorf("Destination path is not within current GOPATH: %+q", err.Error())
+	}
 
 	for _, pkg := range pkgDeclrs.Packages {
 		log.Emit(metrics.Info("ParsePackage: Parse PackageDeclaration"),
@@ -1000,7 +1011,7 @@ func ParsePackage(toDir string, log metrics.Metrics, provider *AnnotationRegistr
 			metrics.With("package", pkg.Package),
 			metrics.With("From", pkg.FilePath))
 
-		wdrs, err := provider.ParseDeclr(pkgDeclrs, pkg, toDir)
+		wdrs, err := provider.ParseDeclr(pkgDeclrs, pkg, toSrcPath)
 		if err != nil {
 			log.Emit(metrics.Error(fmt.Errorf("ParseFailure: Package %q", pkg.Package)),
 				metrics.With("error", err.Error()), metrics.With("package", pkg.Package))
@@ -1030,10 +1041,20 @@ func ParsePackage(toDir string, log metrics.Metrics, provider *AnnotationRegistr
 }
 
 // SimplyParsePackage takes the provided package declrations parsing all internals with the appropriate generators suited to the type and annotations.
+// Provided toDir must be a absolute path.
 func SimplyParsePackage(toDir string, log metrics.Metrics, provider *AnnotationRegistry, doFileOverwrite bool, pkgDeclrs Package) error {
 	log.Emit(metrics.Info("Begin ParsePackage"), metrics.With("toDir", toDir),
 		metrics.With("overwriter-file", doFileOverwrite),
 		metrics.With("package", pkgDeclrs.Path))
+
+	if !filepath.IsAbs(toDir) {
+		return errors.New("Destination path must be a absolute path directory")
+	}
+
+	toSrcPath, err := srcpath.RelativeToSrc(toDir)
+	if err != nil {
+		return fmt.Errorf("Destination path is not within current GOPATH: %+q", err.Error())
+	}
 
 	for _, pkg := range pkgDeclrs.Packages {
 		log.Emit(metrics.Info("ParsePackage: Parse PackageDeclaration"),
@@ -1041,7 +1062,7 @@ func SimplyParsePackage(toDir string, log metrics.Metrics, provider *AnnotationR
 			metrics.With("package", pkg.Package),
 			metrics.With("From", pkg.FilePath))
 
-		wdrs, err := provider.ParseDeclr(pkgDeclrs, pkg, toDir)
+		wdrs, err := provider.ParseDeclr(pkgDeclrs, pkg, toSrcPath)
 		if err != nil {
 			log.Emit(metrics.Error(fmt.Errorf("ParseFailure: Package %q", pkg.Package)),
 				metrics.With("error", err.Error()), metrics.With("package", pkg.Package))
