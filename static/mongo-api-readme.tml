@@ -14,6 +14,12 @@ Exec(ctx context.Context, fx func(col *mgo.Collection) error) error
 
 The following methods exists in the generated API as pertaining to CRUD:
 
+## Count
+
+```go
+Count(ctx context.Context) (int, error)
+```
+
 ## Create
 
 ```go
