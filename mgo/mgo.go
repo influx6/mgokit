@@ -177,6 +177,7 @@ func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDecl
 		gen.Package(
 			gen.Name(packageName),
 			gen.Imports(
+				gen.Import("errors", ""),
 				gen.Import("fmt", ""),
 				gen.Import("strings", ""),
 				gen.Import("gopkg.in/mgo.v2", "mgo"),
