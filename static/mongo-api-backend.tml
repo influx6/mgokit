@@ -2,6 +2,7 @@
 // methods exposed by the DB implementation for the giving type {{.Struct.Object.Name}}.
 // @implement
 type {{.Struct.Object.Name}}DBBackend interface{
+  Count(ctx context.Context) (int, error)
   Delete(ctx context.Context, publicID string) error
   Create(ctx context.Context, elem {{.Struct.Package}}.{{.Struct.Object.Name}}) error 
   Get(ctx context.Context, publicID string)  ({{.Struct.Package}}.{{.Struct.Object.Name}},  error)
