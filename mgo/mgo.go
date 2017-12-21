@@ -145,7 +145,7 @@ func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDecl
 		gen.Package(
 			gen.Name("types"),
 			gen.Imports(
-				gen.Import("github.com/influx6/faux/context", ""),
+				gen.Import("context", ""),
 				gen.Import(str.Path, ""),
 			),
 			gen.Block(
@@ -181,7 +181,7 @@ func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDecl
 				gen.Import("strings", ""),
 				gen.Import("gopkg.in/mgo.v2", "mgo"),
 				gen.Import("gopkg.in/mgo.v2/bson", ""),
-				gen.Import("github.com/influx6/faux/context", ""),
+				gen.Import("context", ""),
 				gen.Import("github.com/influx6/faux/metrics", ""),
 				gen.Import(str.Path, ""),
 			),
