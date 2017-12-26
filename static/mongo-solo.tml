@@ -4,6 +4,67 @@ type MongoDB interface {
 	New() (*mgo.Database, *mgo.Session, error)
 }
 
+// Config provides configuration for connecting to a db.
+type Config struct {
+	Host     string
+	AuthDB   string
+	DB       string
+	User     string
+	Password string
+	Mode     mgo.Mode
+}
+
+// GetSession attempts to retrieve the giving session for the given config.
+func GetSession(config Config) (*mgo.Session, error) {
+	info := mgo.DialInfo{
+		Addrs:    []string{config.Host},
+		Timeout:  60 * time.Second,
+		Database: config.AuthDB,
+		Username: config.User,
+		Password: config.Password,
+	}
+
+	// Create a session which maintains a pool of socket connections
+	// to our MongoDB.
+	ses, err := mgo.DialWithInfo(&info)
+	if err != nil {
+		return nil, err
+	}
+
+	if config.Mode < 0 {
+		config.Mode = mgo.Monotonic
+	}
+
+	ses.SetMode(config.Mode, true)
+
+	return ses, nil
+}
+
+// NewMongoDB returns a new instance of a MongoServer.
+func NewMongoDB(config Config) MongoDB {
+	var mn mongoServer
+	mn.Config = config
+
+	return &mn
+}
+
+// mongoServer defines a mongo connection manager that builds
+// allows usage of a giving configuration to generate new mongo
+// sessions and database instances.
+type mongoServer struct {
+	Config
+}
+
+// New returns a new session and database from the giving configuration.
+func (m *mongoServer) New() (*mgo.Database, *mgo.Session, error) {
+	ses, err := GetSession(m.Config)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return ses.DB(m.Config.DB), ses, nil
+}
+
 // DB defines a structure which provide DB CRUD operations
 // using mongo as the underline db.
 type DB struct{

@@ -1,7 +1,7 @@
 var (
     events = metrics.New(custom.StackDisplay(os.Stdout))
 
-    config = mongo.Config{
+    config = mdb.Config{
         Mode: mgo.Monotonic,
         DB: os.Getenv("{{.Struct.Package}}_MONGO_TEST_DB"),
         Host: os.Getenv("{{.Struct.Package}}_MONGO_TEST_HOST"),
@@ -16,11 +16,12 @@ var (
 // TestGet{{.Struct.Object.Name}} validates the retrieval of a {{.Struct.Object.Name}}
 // record from a mongodb.
 func TestGet{{.Struct.Object.Name}}(t *testing.T){
-    api := mdb.New(testCol, events, mongo.New(config))
+    api := mdb.New(testCol, events, mdb.NewMongoDB(config))
 
-    ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
+    ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+    defer cancel()
 
-    elem, err := Load{{.Struct.Object.Name.Name}}JSON({{lower .Struct.Object.Name.Name}}CreateJSON)
+    elem, err := fixtures.Load{{.Struct.Object.Name.Name}}JSON(fixtures.{{.Struct.Object.Name.Name}}JSON)
     if err != nil {
         tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
     }
@@ -43,15 +44,16 @@ func TestGet{{.Struct.Object.Name}}(t *testing.T){
 // TestGetAll{{.Struct.Object.Name}} validates the retrieval of all {{.Struct.Object.Name}}
 // record from a mongodb.
 func TestGetAll{{.Struct.Object.Name}}(t *testing.T){
-    api := mdb.New(testCol, events, mongo.New(config))
+    api := mdb.New(testCol, events, mdb.NewMongoDB(config))
 
-    ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
+    ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	defer cancel()
 
-    elem, err := Load{{.Struct.Object.Name.Name}}JSON({{lower .Struct.Object.Name.Name}}CreateJSON)
-    if err != nil {
-        tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
-    }
-    tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
+	elem, err := fixtures.Load{{.Struct.Object.Name.Name}}JSON(fixtures.{{.Struct.Object.Name.Name}}JSON)
+	if err != nil {
+		tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
+	}
+	tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
 
     defer api.Delete(ctx, elem.PublicID)
 
@@ -75,15 +77,16 @@ func TestGetAll{{.Struct.Object.Name}}(t *testing.T){
 // TestGetAll{{.Struct.Object.Name}}OrderBy validates the retrieval of all {{.Struct.Object.Name}}
 // record from a mongodb.
 func TestGetAll{{.Struct.Object.Name}}ByOrder(t *testing.T){
-    api := mdb.New(testCol, events, mongo.New(config))
+    api := mdb.New(testCol, events, mdb.NewMongoDB(config))
 
-    ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
+    ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	defer cancel()
 
-    elem, err := Load{{.Struct.Object.Name.Name}}JSON({{lower .Struct.Object.Name.Name}}CreateJSON)
-    if err != nil {
-        tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
-    }
-    tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
+	elem, err := fixtures.Load{{.Struct.Object.Name.Name}}JSON(fixtures.{{.Struct.Object.Name.Name}}JSON)
+	if err != nil {
+		tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
+	}
+	tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
 
     defer api.Delete(ctx, elem.PublicID)
 
@@ -107,15 +110,16 @@ func TestGetAll{{.Struct.Object.Name}}ByOrder(t *testing.T){
 // Test{{.Struct.Object.Name}}Create validates the creation of a {{.Struct.Object.Name}}
 // record with a mongodb.
 func Test{{.Struct.Object.Name}}Create(t *testing.T){
-    api := mdb.New(testCol, events, mongo.New(config))
+    api := mdb.New(testCol, events, mdb.NewMongoDB(config))
 
-    ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
+    ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	defer cancel()
 
-    elem, err := Load{{.Struct.Object.Name.Name}}JSON({{lower .Struct.Object.Name.Name}}CreateJSON)
-    if err != nil {
-        tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
-    }
-    tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
+	elem, err := fixtures.Load{{.Struct.Object.Name.Name}}JSON(fixtures.{{.Struct.Object.Name.Name}}JSON)
+	if err != nil {
+		tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
+	}
+	tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
 
     defer api.Delete(ctx, elem.PublicID)
 
@@ -128,15 +132,16 @@ func Test{{.Struct.Object.Name}}Create(t *testing.T){
 // Test{{.Struct.Object.Name}}Update validates the update of a {{.Struct.Object.Name}}
 // record with a mongodb.
 func Test{{.Struct.Object.Name}}Update(t *testing.T){
-    api := mdb.New(testCol, events, mongo.New(config))
+    api := mdb.New(testCol, events, mdb.NewMongoDB(config))
 
-    ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
+    ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	defer cancel()
 
-    elem, err := Load{{.Struct.Object.Name.Name}}JSON({{lower .Struct.Object.Name.Name}}CreateJSON)
-    if err != nil {
-        tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
-    }
-    tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
+	elem, err := fixtures.Load{{.Struct.Object.Name.Name}}JSON(fixtures.{{.Struct.Object.Name.Name}}JSON)
+	if err != nil {
+		tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
+	}
+	tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
 
     defer api.Delete(ctx, elem.PublicID)
 
@@ -145,9 +150,15 @@ func Test{{.Struct.Object.Name}}Update(t *testing.T){
     }
     tests.Passed("Successfully added record for {{.Struct.Object.Name}} into db.")
 
-    {{ randField .Struct "elem" "json" "public_id" }}
+    elem2, err := fixtures.Load{{.Struct.Object.Name.Name}}JSON(fixtures.{{.Struct.Object.Name.Name}}JSON)
+	if err != nil {
+		tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
+	}
+	tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
 
-    if err := api.Update(ctx, elem.PublicID, elem); err != nil {
+	elem2.PublicID = elem.PublicID
+
+    if err := api.Update(ctx, elem2.PublicID, elem2); err != nil {
         tests.Failed("Successfully updated record for {{.Struct.Object.Name}} into db: %+q.", err)
     }
     tests.Passed("Successfully updated record for {{.Struct.Object.Name}} into db.")
@@ -156,15 +167,16 @@ func Test{{.Struct.Object.Name}}Update(t *testing.T){
 // Test{{.Struct.Object.Name}}Delete validates the removal of a {{.Struct.Object.Name}}
 // record from a mongodb.
 func Test{{.Struct.Object.Name}}Delete(t *testing.T){
-    api := mdb.New(testCol, events, mongo.New(config))
+    api := mdb.New(testCol, events, mdb.NewMongoDB(config))
 
-    ctx := context.WithTimeout(context.NewValueBag(), 10 * time.Second)
+    ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	defer cancel()
 
-    elem, err := Load{{.Struct.Object.Name.Name}}JSON({{lower .Struct.Object.Name.Name}}CreateJSON)
-    if err != nil {
-        tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
-    }
-    tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
+	elem, err := fixtures.Load{{.Struct.Object.Name.Name}}JSON(fixtures.{{.Struct.Object.Name.Name}}JSON)
+	if err != nil {
+		tests.Failed("Successfully loaded JSON for {{.Struct.Object.Name}} record: %+q.", err)
+	}
+	tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
 
     if err := api.Create(ctx, elem); err != nil {
         tests.Failed("Successfully added record for {{.Struct.Object.Name}} into db: %+q.", err)
@@ -176,7 +188,7 @@ func Test{{.Struct.Object.Name}}Delete(t *testing.T){
     }
     tests.Passed("Successfully removed record for {{.Struct.Object.Name}} into db.")
 
-    if _, err = api.Get(ctx, elem.PublicID; err == nil {
+    if _, err = api.Get(ctx, elem.PublicID); err == nil {
         tests.Failed("Successfully failed to get deleted record for {{.Struct.Object.Name}} into db.")
     }
     tests.Passed("Successfully failed to get deleted record for {{.Struct.Object.Name}} into db.")

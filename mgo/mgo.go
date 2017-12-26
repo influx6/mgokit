@@ -48,45 +48,45 @@ func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDecl
 
 	packageName := fmt.Sprintf("%smgo", strings.ToLower(str.Object.Name.Name))
 	packageFinalPath := filepath.Join(toPackage, packageName)
+	packageFinalFixturesPath := filepath.Join(toPackage, packageName, "fixtures")
 
-	//mongoTestGen := gen.Block(
-	//	gen.Package(
-	//		gen.Name(fmt.Sprintf("%s_test", packageName)),
-	//		gen.Imports(
-	//			gen.Import("os", ""),
-	//			gen.Import("time", ""),
-	//			gen.Import("testing", ""),
-	//			gen.Import("gopkg.in/mgo.v2", "mgo"),
-	//			gen.Import("github.com/influx6/faux/tests", ""),
-	//			gen.Import("github.com/influx6/faux/metrics", ""),
-	//			gen.Import("github.com/influx6/faux/context", ""),
-	//			gen.Import("github.com/influx6/faux/db/mongo", ""),
-	//			gen.Import("github.com/influx6/faux/metrics/custom", ""),
-	//			gen.Import(packageFinalPath, "mdb"),
-	//			gen.Import(str.Path, ""),
-	//		),
-	//		gen.Block(
-	//			gen.SourceTextWith(
-	//				string(static.MustReadFile("mongo-api-test.tml", true)),
-	//				gen.ToTemplateFuncs(
-	//					ast.ASTTemplatFuncs,
-	//					template.FuncMap{
-	//						"map":       ast.MapOutFields,
-	//						"mapValues": ast.MapOutValues,
-	//						"hasFunc":   pkgDeclr.HasFunctionFor,
-	//					},
-	//				),
-	//				struct {
-	//					Pkg          *ast.PackageDeclaration
-	//					Struct       ast.StructDeclaration
-	//				}{
-	//					Pkg:          &pkgDeclr,
-	//					Struct:       str,
-	//				},
-	//			),
-	//		),
-	//	),
-	//)
+	mongoTestGen := gen.Block(
+		gen.Package(
+			gen.Name(fmt.Sprintf("%s_test", packageName)),
+			gen.Imports(
+				gen.Import("os", ""),
+				gen.Import("time", ""),
+				gen.Import("context", ""),
+				gen.Import("testing", ""),
+				gen.Import("gopkg.in/mgo.v2", "mgo"),
+				gen.Import("github.com/influx6/faux/tests", ""),
+				gen.Import("github.com/influx6/faux/metrics", ""),
+				gen.Import("github.com/influx6/faux/metrics/custom", ""),
+				gen.Import(packageFinalPath, "mdb"),
+				gen.Import(packageFinalFixturesPath, "fixtures"),
+			),
+			gen.Block(
+				gen.SourceTextWith(
+					string(static.MustReadFile("mongo-api-test.tml", true)),
+					gen.ToTemplateFuncs(
+						ast.ASTTemplatFuncs,
+						template.FuncMap{
+							"map":       ast.MapOutFields,
+							"mapValues": ast.MapOutValues,
+							"hasFunc":   pkgDeclr.HasFunctionFor,
+						},
+					),
+					struct {
+						Pkg    *ast.PackageDeclaration
+						Struct ast.StructDeclaration
+					}{
+						Pkg:    &pkgDeclr,
+						Struct: str,
+					},
+				),
+			),
+		),
+	)
 
 	mongoReadmeGen := gen.Block(
 		gen.Block(
@@ -219,6 +219,11 @@ func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDecl
 			FileName:     fmt.Sprintf("%s_backend.go", strings.ToLower(str.Object.Name.Name)),
 			Dir:          "types",
 			DontOverride: true,
+		},
+		{
+			Writer:   fmtwriter.New(mongoTestGen, true, true),
+			FileName: fmt.Sprintf("%s_test.go", packageName),
+			Dir:      packageName,
 		},
 		{
 			Writer:   fmtwriter.New(mongoGen, true, true),
