@@ -10,6 +10,7 @@ Mgokit implements a code generator which automatically generates go packages for
 go get -u github.com/gokit/mgokit
 ```
 
+
 ## Usage
 
 Running the following commands instantly generates all necessary files and packages for giving code gen.
@@ -80,3 +81,37 @@ type UserBSON interface {
 	BSON() bson.M
 }
 ```
+
+## Customization
+
+If you wish to use a custome name prefix for the config environment variables names generating in the test, then setting 
+a attribute of `ENVName` on the attribute will generate a config in the ff format:
+
+```go
+// @sql(ENVName => BOB)
+```
+
+```go
+    config = mdb.Config{
+        Mode: mgo.Monotonic,
+        DB: os.Getenv("{{.ENVName}}_MONGO_TEST_DB"),
+        Host: os.Getenv("{{.ENVName}}_MONGO_TEST_HOST"),
+        User: os.Getenv("{{.ENVName}}_MONGO_TEST_USER"),
+        AuthDB: os.Getenv("{{.ENVName}}_MONGO_TEST_AUTHDB"),
+        Password: os.Getenv("{{.ENVName}}_MONGO_TEST_PASSWORD"),
+    }
+```
+
+Will result in:
+
+```go
+    config = mdb.Config{
+        Mode: mgo.Monotonic,
+        DB: os.Getenv("BOB_MONGO_TEST_DB"),
+        Host: os.Getenv("BOB_MONGO_TEST_HOST"),
+        User: os.Getenv("BOB_MONGO_TEST_USER"),
+        AuthDB: os.Getenv("BOB_MONGO_TEST_AUTHDB"),
+        Password: os.Getenv("BOB_MONGO_TEST_PASSWORD"),
+    }
+```
+

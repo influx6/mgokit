@@ -1,0 +1,5 @@
+
+build: docker build -t {{toLower .PackageName}} -f ./test.dockerfile
+
+test: build
+	docker run --rm {{toLower .PackageName}}

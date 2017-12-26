@@ -50,6 +50,11 @@ func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDecl
 	packageFinalPath := filepath.Join(toPackage, packageName)
 	packageFinalFixturesPath := filepath.Join(toPackage, packageName, "fixtures")
 
+	configName := an.Param("ENVName")
+	if configName == "" {
+		configName = strings.ToUpper(str.Package)
+	}
+
 	mongoTestGen := gen.Block(
 		gen.Package(
 			gen.Name(fmt.Sprintf("%s_test", packageName)),
@@ -77,13 +82,61 @@ func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDecl
 						},
 					),
 					struct {
-						Pkg    *ast.PackageDeclaration
-						Struct ast.StructDeclaration
+						ENVName string
+						Pkg     *ast.PackageDeclaration
+						Struct  ast.StructDeclaration
 					}{
-						Pkg:    &pkgDeclr,
-						Struct: str,
+						ENVName: configName,
+						Pkg:     &pkgDeclr,
+						Struct:  str,
 					},
 				),
+			),
+		),
+	)
+
+	mongoMakefileGen := gen.Block(
+		gen.Block(
+			gen.SourceText(
+				string(static.MustReadFile("makefile.tml", true)),
+				struct {
+					Pkg          *ast.PackageDeclaration
+					Struct       ast.StructDeclaration
+					CreateAction ast.StructDeclaration
+					UpdateAction ast.StructDeclaration
+					PackageName  string
+					PackagePath  string
+					ENVName      string
+				}{
+					ENVName:     configName,
+					PackagePath: packageFinalPath,
+					PackageName: packageName,
+					Pkg:         &pkgDeclr,
+					Struct:      str,
+				},
+			),
+		),
+	)
+
+	mongoDockerfileGen := gen.Block(
+		gen.Block(
+			gen.SourceText(
+				string(static.MustReadFile("dockerfile.tml", true)),
+				struct {
+					Pkg          *ast.PackageDeclaration
+					Struct       ast.StructDeclaration
+					CreateAction ast.StructDeclaration
+					UpdateAction ast.StructDeclaration
+					PackageName  string
+					PackagePath  string
+					ENVName      string
+				}{
+					ENVName:     configName,
+					PackagePath: packageFinalPath,
+					PackageName: packageName,
+					Pkg:         &pkgDeclr,
+					Struct:      str,
+				},
 			),
 		),
 	)
@@ -212,6 +265,16 @@ func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDecl
 		{
 			Writer:   mongoReadmeGen,
 			FileName: "README.md",
+			Dir:      packageName,
+		},
+		{
+			Writer:   mongoMakefileGen,
+			FileName: "makefile",
+			Dir:      packageName,
+		},
+		{
+			Writer:   mongoDockerfileGen,
+			FileName: "test.dockerfile",
 			Dir:      packageName,
 		},
 		{
