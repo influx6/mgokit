@@ -713,20 +713,65 @@ func parseFileToPackage(log metrics.Metrics, dir string, path string, pkgName st
 								metrics.With("Annotations", len(annotations)),
 								metrics.With("StructName", obj.Name.Name))
 
+							var mainType *ast.Ident
+							var argType *ArgType
+							var aliasedObject *ast.Object
+							var aliasedObjectSpec *ast.TypeSpec
+
+							if typeIdent, ok := obj.Type.(*ast.Ident); ok {
+								mainType = typeIdent
+
+								if mainType.Obj != nil {
+									aliasedObject = mainType.Obj
+									if atype, ok := mainType.Obj.Decl.(*ast.TypeSpec); ok {
+										aliasedObjectSpec = atype
+										var field ast.Field
+										field.Type = atype.Type
+										if arg, err := GetArgTypeFromField(1, "type", packageDeclr.File, &field, &packageDeclr); err == nil {
+											argType = &arg
+										} else {
+											log.Emit(
+												metrics.Error(err),
+												metrics.Message("Failed to parse TypeSpec internal type"),
+												metrics.With("type", mainType.Name),
+											)
+										}
+									}
+								} else {
+									var field ast.Field
+									field.Type = typeIdent
+									if arg, err := GetArgTypeFromField(1, "type", packageDeclr.File, &field, &packageDeclr); err == nil {
+										argType = &arg
+									} else {
+										log.Emit(
+											metrics.Error(err),
+											metrics.Message("Failed to parse IdentSpec internal type"),
+											metrics.With("type", typeIdent.Name),
+										)
+									}
+
+								}
+							}
+
 							packageDeclr.Types = append(packageDeclr.Types, TypeDeclaration{
-								Object:       obj,
-								GenObj:       rdeclr,
-								Annotations:  annotations,
-								Comments:     comment,
-								Associations: associations,
-								Declr:        &packageDeclr,
-								Source:       string(source),
-								File:         packageDeclr.File,
-								Package:      packageDeclr.Package,
-								Path:         packageDeclr.Path,
-								FilePath:     packageDeclr.FilePath,
-								From:         beginPosition.Offset,
-								Length:       positionLength,
+								Object:          obj,
+								GenObj:          rdeclr,
+								Annotations:     annotations,
+								Comments:        comment,
+								TypeInfo:        argType,
+								Type:            mainType,
+								AliasedType:     aliasedObject,
+								AliasedTypeSpec: aliasedObjectSpec,
+								Aliased:         (aliasedObject != nil),
+								Associations:    associations,
+								Declr:           &packageDeclr,
+								Source:          string(source),
+								File:            packageDeclr.File,
+								Package:         packageDeclr.Package,
+								Path:            packageDeclr.Path,
+								FilePath:        packageDeclr.FilePath,
+								From:            beginPosition.Offset,
+								Length:          positionLength,
 							})
 						}
 
