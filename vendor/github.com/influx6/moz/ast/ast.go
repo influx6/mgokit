@@ -32,6 +32,7 @@ var (
 	goPath    = os.Getenv("GOPATH")
 	goSrcPath = filepath.Join(goPath, "src")
 
+	timeLayout = "2006-01-02T15:04:05Z07:00"
 	spaces     = regexp.MustCompile(`/s+`)
 	itag       = regexp.MustCompile(`((\w+):"(\w+|[\w,?\s+\w]+)")`)
 	annotation = regexp.MustCompile("@(\\w+(:\\w+)?)(\\([.\\s\\S]+\\))?")
@@ -2406,7 +2407,7 @@ func DefaultFieldValue(fld FieldDeclaration) string {
 func RandomDataTypeValueJSON(typeName string, varName string) string {
 	switch typeName {
 	case "time.Time", "*time.Time", "Time", "time.time":
-		return strconv.Quote(time.Now().UTC().String())
+		return strconv.Quote(time.Now().Format(timeLayout))
 	case "uint", "uint32", "uint64":
 		return fmt.Sprintf("%d", rand.Uint64())
 	case "bool":
@@ -2430,7 +2431,7 @@ func RandomDataTypeValueJSON(typeName string, varName string) string {
 		case "year":
 			return fmt.Sprintf("%d", fake.Year(1998, 10000))
 		case "date", "date_time", "time":
-			return strconv.Quote(time.Now().UTC().String())
+			return strconv.Quote(time.Now().Format(timeLayout))
 		case "location", "location_address", "location_addr":
 			return fmt.Sprintf("%q", fake.Street())
 		case "company", "company_name", "companyname":
@@ -2485,7 +2486,7 @@ func RandomDataTypeValueJSON(typeName string, varName string) string {
 func RandomDataTypeValueWithName(typeName string, varName string) string {
 	switch typeName {
 	case "time.Time", "*time.Time", "Time", "time.time":
-		return strconv.Quote(time.Now().UTC().String())
+		return strconv.Quote(time.Now().Format(timeLayout))
 	case "uint", "uint32", "uint64":
 		return fmt.Sprintf("%d", rand.Uint64())
 	case "bool":
@@ -2509,7 +2510,7 @@ func RandomDataTypeValueWithName(typeName string, varName string) string {
 		case "year":
 			return fmt.Sprintf("%d", fake.Year(1998, 10000))
 		case "date", "date_time", "time":
-			return strconv.Quote(time.Now().UTC().String())
+			return strconv.Quote(time.Now().Format(timeLayout))
 		case "location", "location_address", "location_addr":
 			return fmt.Sprintf("%q", fake.Street())
 		case "company", "company_name", "companyname":
@@ -2564,7 +2565,7 @@ func RandomDataTypeValueWithName(typeName string, varName string) string {
 func RandomDataTypeValue(typeName string) string {
 	switch typeName {
 	case "time.Time":
-		return time.Now().UTC().String()
+		return time.Now().Format(timeLayout)
 	case "uint", "uint32", "uint64":
 		return fmt.Sprintf("%d", rand.Uint64())
 	case "bool":
@@ -2593,7 +2594,7 @@ func DefaultTypeValueString(typeName string) string {
 	case "bool":
 		return `false`
 	case "time.Time", "*time.Time", "Time", "time.time":
-		return strconv.Quote(time.Now().UTC().String())
+		return strconv.Quote(time.Now().Format(timeLayout))
 	case "string":
 		return `""`
 	case "rune":
