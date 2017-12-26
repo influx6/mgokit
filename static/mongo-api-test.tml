@@ -1,6 +1,4 @@
 var (
-    events = metrics.New(custom.StackDisplay(os.Stdout))
-
     config = mdb.Config{
         Mode: mgo.Monotonic,
         DB: os.Getenv("{{.ENVName}}_MONGO_TEST_DB"),
@@ -16,6 +14,11 @@ var (
 // TestGet{{.Struct.Object.Name}} validates the retrieval of a {{.Struct.Object.Name}}
 // record from a mongodb.
 func TestGet{{.Struct.Object.Name}}(t *testing.T){
+	events := metrics.New()
+	if testing.Verbose(){
+		events = metrics.New(custom.StackDisplay(os.Stdout))
+	}
+
     api := mdb.New(testCol, events, mdb.NewMongoDB(config))
 
     ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
@@ -44,7 +47,12 @@ func TestGet{{.Struct.Object.Name}}(t *testing.T){
 // TestGetAll{{.Struct.Object.Name}} validates the retrieval of all {{.Struct.Object.Name}}
 // record from a mongodb.
 func TestGetAll{{.Struct.Object.Name}}(t *testing.T){
-    api := mdb.New(testCol, events, mdb.NewMongoDB(config))
+	events := metrics.New()
+	if testing.Verbose(){
+		events = metrics.New(custom.StackDisplay(os.Stdout))
+	}
+
+	api := mdb.New(testCol, events, mdb.NewMongoDB(config))
 
     ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
@@ -77,6 +85,10 @@ func TestGetAll{{.Struct.Object.Name}}(t *testing.T){
 // TestGetAll{{.Struct.Object.Name}}OrderBy validates the retrieval of all {{.Struct.Object.Name}}
 // record from a mongodb.
 func TestGetAll{{.Struct.Object.Name}}ByOrder(t *testing.T){
+	events := metrics.New()
+	if testing.Verbose(){
+		events = metrics.New(custom.StackDisplay(os.Stdout))
+	}
     api := mdb.New(testCol, events, mdb.NewMongoDB(config))
 
     ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
@@ -110,6 +122,10 @@ func TestGetAll{{.Struct.Object.Name}}ByOrder(t *testing.T){
 // Test{{.Struct.Object.Name}}Create validates the creation of a {{.Struct.Object.Name}}
 // record with a mongodb.
 func Test{{.Struct.Object.Name}}Create(t *testing.T){
+	events := metrics.New()
+	if testing.Verbose(){
+		events = metrics.New(custom.StackDisplay(os.Stdout))
+	}
     api := mdb.New(testCol, events, mdb.NewMongoDB(config))
 
     ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
@@ -132,6 +148,11 @@ func Test{{.Struct.Object.Name}}Create(t *testing.T){
 // Test{{.Struct.Object.Name}}Update validates the update of a {{.Struct.Object.Name}}
 // record with a mongodb.
 func Test{{.Struct.Object.Name}}Update(t *testing.T){
+	events := metrics.New()
+	if testing.Verbose(){
+		events = metrics.New(custom.StackDisplay(os.Stdout))
+	}
+
     api := mdb.New(testCol, events, mdb.NewMongoDB(config))
 
     ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
@@ -167,6 +188,10 @@ func Test{{.Struct.Object.Name}}Update(t *testing.T){
 // Test{{.Struct.Object.Name}}Delete validates the removal of a {{.Struct.Object.Name}}
 // record from a mongodb.
 func Test{{.Struct.Object.Name}}Delete(t *testing.T){
+	events := metrics.New()
+	if testing.Verbose(){
+		events = metrics.New(custom.StackDisplay(os.Stdout))
+	}
     api := mdb.New(testCol, events, mdb.NewMongoDB(config))
 
     ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
