@@ -82,12 +82,11 @@ func New(m metrics.Metrics,  mo MongoDB) *DB{
 
 // WithIndex applies the provided index slice to the provided collection configuration.
 func (mdb *DB) WithIndex(ctx context.Context, col string, indexes ...mgo.Index) error {
-    m := metrics.NewTrace("DB.WithIndex")
-    defer mdb.metrics.Emit(metrics.Info("DB.WithIndex"),metrics.WithTrace(m.End()))
+	if len(indexes) == 0 {
+		return nil
+	}
 
-    if len(indexes) == 0 {
-        return nil
-    }
+	defer mdb.metrics.CollectMetrics("{{.Struct.Object.Name}}DB.Index")
 
     database, session, err := mdb.db.New()
     if err != nil {
@@ -119,8 +118,7 @@ func (mdb *DB) WithIndex(ctx context.Context, col string, indexes ...mgo.Index) 
 
 // Exec provides a function which allows the execution of a custom function against the collection.
 func (mdb *DB) Exec(ctx context.Context, col string, fx func(col *mgo.Collection) error) error {
-    m := metrics.NewTrace("DB.Exec")
-    defer mdb.metrics.Emit(metrics.Info("DB.Exec"),metrics.WithTrace(m.End()))
+	defer mdb.metrics.CollectMetrics("{{.Struct.Object.Name}}DB.Exec")
 
     if context.IsExpired(ctx) {
         err := fmt.Errorf("Context has expired")

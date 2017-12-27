@@ -112,9 +112,8 @@ func (mdb *{{.Struct.Object.Name}}DB) ensureIndex() error {
     if mdb.ensuredIndex {
         return nil
     }
-    
-    m := metrics.NewTrace("{{.Struct.Object.Name}}DB.ensureIndex")
-    defer mdb.metrics.Emit(metrics.Info("{{.Struct.Object.Name}}DB.ensureIndex"),metrics.WithTrace(m.End()))
+
+	defer mdb.metrics.CollectMetrics("{{.Struct.Object.Name}}DB.ensureIndex")
 
     if len(mdb.indexes) == 0 {
         return nil
@@ -155,8 +154,7 @@ func (mdb *{{.Struct.Object.Name}}DB) ensureIndex() error {
 
 // Count attempts to return the total number of record from the db.
 func (mdb *{{.Struct.Object.Name}}DB) Count(ctx context.Context) (int, error) {
-    m := metrics.NewTrace("{{.Struct.Object.Name}}DB.Count")
-    defer mdb.metrics.Emit(metrics.Info("{{.Struct.Object.Name}}DB.Count"),metrics.WithTrace(m.End()))
+	defer mdb.metrics.CollectMetrics("{{.Struct.Object.Name}}DB.Count")
 
     if isContextExpired(ctx) {
         err := fmt.Errorf("Context has expired")
@@ -197,8 +195,7 @@ func (mdb *{{.Struct.Object.Name}}DB) Count(ctx context.Context) (int, error) {
 // Records using this DB must have a public id value, expressed either by a bson or json tag
 // on the given {{.Struct.Package}}.{{.Struct.Object.Name}} struct.
 func (mdb *{{.Struct.Object.Name}}DB) Delete(ctx context.Context, publicID string) error {
-    m := metrics.NewTrace("{{.Struct.Object.Name}}DB.Delete")
-    defer mdb.metrics.Emit(metrics.Info("{{.Struct.Object.Name}}DB.Delete"),metrics.With("publicID", publicID),metrics.WithTrace(m.End()))
+	defer mdb.metrics.CollectMetrics("{{.Struct.Object.Name}}DB.Delete")
 
     if isContextExpired(ctx) {
         err := fmt.Errorf("Context has expired")
@@ -241,8 +238,7 @@ func (mdb *{{.Struct.Object.Name}}DB) Delete(ctx context.Context, publicID strin
 // Records using this DB must have a public id value, expressed either by a bson or json tag
 // on the given {{.Struct.Object.Name}} struct.
 func (mdb *{{.Struct.Object.Name}}DB) Create(ctx context.Context, elem {{.Struct.Package}}.{{.Struct.Object.Name}}) error {
-    m := metrics.NewTrace("{{.Struct.Object.Name}}DB.Create")
-    defer mdb.metrics.Emit(metrics.Info("{{.Struct.Object.Name}}DB.Create"),metrics.With("publicID", elem.PublicID),metrics.WithTrace(m.End()))
+	defer mdb.metrics.CollectMetrics("{{.Struct.Object.Name}}DB.Create")
 
     if isContextExpired(ctx) {
         err := fmt.Errorf("Context has expired")
@@ -306,8 +302,7 @@ func (mdb *{{.Struct.Object.Name}}DB) Create(ctx context.Context, elem {{.Struct
 // Records using this DB must have a public id value, expressed either by a bson or json tag
 // on the given {{.Struct.Object.Name}} struct.
 func (mdb *{{.Struct.Object.Name}}DB) GetAll(ctx context.Context, order string, orderBy string, page int, responsePerPage int)  ([]{{.Struct.Package}}.{{.Struct.Object.Name}},  int, error) {
-    m := metrics.NewTrace("{{.Struct.Object.Name}}DB.GetAll")
-    defer mdb.metrics.Emit(metrics.Info("{{.Struct.Object.Name}}DB.GetAll"),metrics.WithTrace(m.End()))
+	defer mdb.metrics.CollectMetrics("{{.Struct.Object.Name}}DB.GetAll")
 
 	switch strings.ToLower(order) {
 	case "dsc", "desc":
@@ -407,8 +402,7 @@ func (mdb *{{.Struct.Object.Name}}DB) GetAll(ctx context.Context, order string, 
 // Records using this DB must have a public id value, expressed either by a bson or json tag
 // on the given {{.Struct.Object.Name}} struct.
 func (mdb *{{.Struct.Object.Name}}DB) GetAllByOrder(ctx context.Context, order, orderBy string)  ([]{{.Struct.Package}}.{{.Struct.Object.Name}},  error) {
-    m := metrics.NewTrace("{{.Struct.Object.Name}}DB.GetAllByOrder")
-    defer mdb.metrics.Emit(metrics.Info("{{.Struct.Object.Name}}DB.GetAllByOrder"),metrics.WithTrace(m.End()))
+	defer mdb.metrics.CollectMetrics("{{.Struct.Object.Name}}DB.GetAllByOrder")
 
 	switch strings.ToLower(order) {
 	case "dsc", "desc":
@@ -481,8 +475,7 @@ func (mdb *{{.Struct.Object.Name}}DB) GetAllByOrder(ctx context.Context, order, 
 // Records using this DB must have a public id value, expressed either by a bson or json tag
 // on the given {{.Struct.Object.Name}} struct.
 func (mdb *{{.Struct.Object.Name}}DB) GetByField(ctx context.Context, key string, value interface{})  ({{.Struct.Package}}.{{.Struct.Object.Name}},  error) {
-    m := metrics.NewTrace("{{.Struct.Object.Name}}DB.GetByField")
-    defer mdb.metrics.Emit(metrics.Info("{{.Struct.Object.Name}}DB.GetByField"),metrics.With(key, value),metrics.WithTrace(m.End()))
+	defer mdb.metrics.CollectMetrics("{{.Struct.Object.Name}}DB.GetByFiled")
 
     if isContextExpired(ctx) {
         err := fmt.Errorf("Context has expired")
@@ -546,8 +539,7 @@ func (mdb *{{.Struct.Object.Name}}DB) GetByField(ctx context.Context, key string
 // Records using this DB must have a public id value, expressed either by a bson or json tag
 // on the given {{.Struct.Object.Name}} struct.
 func (mdb *{{.Struct.Object.Name}}DB) Get(ctx context.Context, publicID string)  ({{.Struct.Package}}.{{.Struct.Object.Name}},  error) {
-    m := metrics.NewTrace("{{.Struct.Object.Name}}DB.Get")
-    defer mdb.metrics.Emit(metrics.Info("{{.Struct.Object.Name}}DB.Get"),metrics.With("publicID", publicID),metrics.WithTrace(m.End()))
+	defer mdb.metrics.CollectMetrics("{{.Struct.Object.Name}}DB.Get")
 
     if isContextExpired(ctx) {
         err := fmt.Errorf("Context has expired")
@@ -608,8 +600,7 @@ func (mdb *{{.Struct.Object.Name}}DB) Get(ctx context.Context, publicID string) 
 // Records using this DB must have a public id value, expressed either by a bson or json tag
 // on the given {{.Struct.Object.Name}} struct.
 func (mdb *{{.Struct.Object.Name}}DB) Update(ctx context.Context, publicID string, elem {{.Struct.Package}}.{{.Struct.Object.Name}}) error {
-    m := metrics.NewTrace("{{.Struct.Object.Name}}DB.Update")
-    defer mdb.metrics.Emit(metrics.Info("{{.Struct.Object.Name}}DB.Update"),metrics.With("publicID", publicID),metrics.WithTrace(m.End()))
+	defer mdb.metrics.CollectMetrics("{{.Struct.Object.Name}}DB.Update")
 
     if isContextExpired(ctx) {
         err := fmt.Errorf("Context has expired")
@@ -687,8 +678,7 @@ func (mdb *{{.Struct.Object.Name}}DB) Update(ctx context.Context, publicID strin
 
 // Exec provides a function which allows the execution of a custom function against the collection.
 func (mdb *{{.Struct.Object.Name}}DB) Exec(ctx context.Context, fx func(col *mgo.Collection) error) error {
-    m := metrics.NewTrace("{{.Struct.Object.Name}}DB.Exec")
-    defer mdb.metrics.Emit(metrics.Info("{{.Struct.Object.Name}}DB.Exec"),metrics.WithTrace(m.End()))
+	defer mdb.metrics.CollectMetrics("{{.Struct.Object.Name}}DB.Exec")
 
     if isContextExpired(ctx) {
         err := fmt.Errorf("Context has expired")
