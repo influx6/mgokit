@@ -1,6 +1,6 @@
 // {{.Struct.Object.Name}}DBBackend defines a backend which represents the giving
 // methods exposed by the DB implementation for the giving type {{.Struct.Object.Name}}.
-// @implement
+// @implement_mock
 type {{.Struct.Object.Name}}DBBackend interface{
   Count(ctx context.Context) (int, error)
   Delete(ctx context.Context, publicID string) error
