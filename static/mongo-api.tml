@@ -50,7 +50,7 @@ func (mgc Config) Validate() error {
 // MongoDB defines a interface which exposes a method for retrieving a
 // mongo.Database and mongo.Session.
 type MongoDB interface {
-	New() (*mgo.Database, *mgo.Session, error)
+	New(isread bool) (*mgo.Database, *mgo.Session, error)
 }
 
 // NewMongoDB returns a new instance of a MongoDB.

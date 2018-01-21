@@ -8,7 +8,7 @@ var (
         Password: os.Getenv("{{.ENVName}}_MONGO_TEST_PASSWORD"),
     }
 
-	db := mdb.NewMongoDB(config)
+	db = mdb.NewMongoDB(config)
     testCol = "{{lower .Struct.Object.Name.Name}}_test_collection"
 )
 

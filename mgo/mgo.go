@@ -278,10 +278,9 @@ func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDecl
 			Dir:      packageName,
 		},
 		{
-			Writer:       fmtwriter.New(mongoBackendGen, true, true),
-			FileName:     fmt.Sprintf("%s_backend.go", strings.ToLower(str.Object.Name.Name)),
-			Dir:          "types",
-			DontOverride: true,
+			Writer:   fmtwriter.New(mongoBackendGen, true, true),
+			FileName: fmt.Sprintf("%s_backend.go", strings.ToLower(str.Object.Name.Name)),
+			Dir:      "types",
 		},
 		{
 			Writer:   fmtwriter.New(mongoTestGen, true, true),

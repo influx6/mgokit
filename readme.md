@@ -10,7 +10,6 @@ Mgokit implements a code generator which automatically generates go packages for
 go get -u github.com/gokit/mgokit
 ```
 
-
 ## Annotations
 
 - `@mongapi`
@@ -24,6 +23,11 @@ Generate package-level functions for CRUD operation with struct.
 - `@mongo`
 
 Generate simple package with `Exec` function for interacting with mongodb.
+
+
+## Examples
+
+See [Examples](./example) for all usage of provided annotations for code generation with associated results.
 
 ## Usage
 

@@ -1,7 +1,27 @@
+// Package mongoapi provides a auto-generated package which contains a mongo base pkg for db operations.
+//
+//
+package mdb
+
+import (
+	"errors"
+	"runtime"
+	"sync"
+	"time"
+
+	mgo "gopkg.in/mgo.v2"
+
+	"gopkg.in/mgo.v2/bson"
+
+	"github.com/influx6/faux/context"
+
+	"github.com/influx6/faux/metrics"
+)
+
 // errors ...
 var (
-    ErrNotFound = errors.New("record not found")
-    ErrExpiredContext = errors.New("context has expired")
+	ErrNotFound       = errors.New("record not found")
+	ErrExpiredContext = errors.New("context has expired")
 )
 
 //**********************************************************
@@ -46,7 +66,6 @@ func (mgc Config) Validate() error {
 	}
 	return nil
 }
-
 
 // MongoDB defines a interface which exposes a method for retrieving a
 // mongo.Database and mongo.Session.
@@ -152,106 +171,104 @@ func getSession(config Config) (*mgo.Session, error) {
 func AddIndex(db MongoDB, metrics metrics.Metrics, col string, indexes ...mgo.Index) error {
 	defer metrics.CollectMetrics("DB.AddIndex")
 
-    if len(indexes) == 0 {
-        return nil
-    }
+	if len(indexes) == 0 {
+		return nil
+	}
 
-    database, session, err := db.New(false)
-    if err != nil {
-        metrics.Emit(metrics.Errorf("Failed to create session for index"),metrics.With("collection", col),metrics.With("error", err.Error()))
-        return err
-    }
+	database, session, err := db.New(false)
+	if err != nil {
+		metrics.Emit(metrics.Errorf("Failed to create session for index"), metrics.With("collection", col), metrics.With("error", err.Error()))
+		return err
+	}
 
-    defer session.Close()
+	defer session.Close()
 
-    collection := database.C(col)
+	collection := database.C(col)
 
-    for _, index := range indexes {
-        if err := collection.EnsureIndex(index); err != nil {
-            metrics.Emit(metrics.Errorf("Failed to ensure session index"),metrics.With("collection", col),metrics.With("index", index),metrics.With("error", err.Error()))
+	for _, index := range indexes {
+		if err := collection.EnsureIndex(index); err != nil {
+			metrics.Emit(metrics.Errorf("Failed to ensure session index"), metrics.With("collection", col), metrics.With("index", index), metrics.With("error", err.Error()))
 
-            incompleteIndex = true
-            return err
-        }
+			incompleteIndex = true
+			return err
+		}
 
-        metrics.Emit(metrics.Info("Succeeded in ensuring collection index"),metrics.With("collection", col),metrics.With("index", index))
-    }
+		metrics.Emit(metrics.Info("Succeeded in ensuring collection index"), metrics.With("collection", col), metrics.With("index", index))
+	}
 
-
-    metrics.Emit(metrics.Info("Finished adding index"),metrics.With("collection", col))
-    return nil
+	metrics.Emit(metrics.Info("Finished adding index"), metrics.With("collection", col))
+	return nil
 }
 
 // Count attempts to return the total number of record from the db.
 func Count(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string) (int, error) {
 	defer metrics.CollectMetrics("DB.Count")
 
-    if isContextExpired(ctx) {
-        err := ErrExpiredContext
+	if isContextExpired(ctx) {
+		err := ErrExpiredContext
 
-        metrics.Emit(metrics.Errorf("Failed to get record count"),metrics.With("collection", col),metrics.With("error", err.Error()))
-        return -1, err
-    }
+		metrics.Emit(metrics.Errorf("Failed to get record count"), metrics.With("collection", col), metrics.With("error", err.Error()))
+		return -1, err
+	}
 
-    database, session, err := db.New(true)
-    if err != nil {
-        metrics.Emit(metrics.Errorf("Failed to get record count"),metrics.With("collection", col),metrics.With("error", err.Error()))
+	database, session, err := db.New(true)
+	if err != nil {
+		metrics.Emit(metrics.Errorf("Failed to get record count"), metrics.With("collection", col), metrics.With("error", err.Error()))
 
-        return -1, err
-    }
+		return -1, err
+	}
 
-    defer session.Close()
+	defer session.Close()
 
-    query := bson.M{}
-    total, err := database.C(col).Find(query).Count();
-    if err != nil {
-        metrics.Emit(metrics.Errorf("Failed to get record count"),metrics.With("collection", col),metrics.With("query", query),metrics.With("error", err.Error()))
+	query := bson.M{}
+	total, err := database.C(col).Find(query).Count()
+	if err != nil {
+		metrics.Emit(metrics.Errorf("Failed to get record count"), metrics.With("collection", col), metrics.With("query", query), metrics.With("error", err.Error()))
 
-        return -1, err
-    }
+		return -1, err
+	}
 
-    metrics.Emit(metrics.Info("Deleted record"),metrics.With("collection", col),metrics.With("query", query))
+	metrics.Emit(metrics.Info("Deleted record"), metrics.With("collection", col), metrics.With("query", query))
 
-    return total, err
+	return total, err
 }
 
 // Exec provides a function which allows the execution of a custom function against the collection.
 func Exec(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string, isread bool, fx func(col *mgo.Collection) error) error {
 	defer metrics.CollectMetrics("DB.Exec")
 
-    if isContextExpired(ctx) {
-        err := ErrExpiredContext
-        metrics.Emit(metrics.Errorf("Failed to execute operation"),metrics.With("collection", col),metrics.With("error", err.Error()))
-        return err
-    }
+	if isContextExpired(ctx) {
+		err := ErrExpiredContext
+		metrics.Emit(metrics.Errorf("Failed to execute operation"), metrics.With("collection", col), metrics.With("error", err.Error()))
+		return err
+	}
 
-    database, session, err := db.New(isread)
-    if err != nil {
-        metrics.Emit(metrics.Errorf("Failed to create session"),metrics.With("collection", col),metrics.With("error", err.Error()))
-        return err
-    }
+	database, session, err := db.New(isread)
+	if err != nil {
+		metrics.Emit(metrics.Errorf("Failed to create session"), metrics.With("collection", col), metrics.With("error", err.Error()))
+		return err
+	}
 
-    defer session.Close()
+	defer session.Close()
 
-    if err := fx(database.C(col)); err != nil {
-        metrics.Emit(metrics.Errorf("Failed to execute operation"),metrics.With("collection", col),metrics.With("error", err.Error()))
-        if err == mgo.ErrNotFound {
-            return ErrNotFound
-        }
-        return err
-    }
+	if err := fx(database.C(col)); err != nil {
+		metrics.Emit(metrics.Errorf("Failed to execute operation"), metrics.With("collection", col), metrics.With("error", err.Error()))
+		if err == mgo.ErrNotFound {
+			return ErrNotFound
+		}
+		return err
+	}
 
-    metrics.Emit(metrics.Info("Operation executed"), metrics.With("collection", col))
+	metrics.Emit(metrics.Info("Operation executed"), metrics.With("collection", col))
 
-    return nil
+	return nil
 }
 
-func isContextExpired(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string,) bool {
-    select{
-        case <-ctx.Done():
-            return true
-        default:
-            return false
-    }
+func isContextExpired(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string) bool {
+	select {
+	case <-ctx.Done():
+		return true
+	default:
+		return false
+	}
 }
-
