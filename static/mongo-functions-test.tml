@@ -8,6 +8,7 @@ var (
         Password: os.Getenv("{{.ENVName}}_MONGO_TEST_PASSWORD"),
     }
 
+	db := mdb.NewMongoDB(config)
     testCol = "{{lower .Struct.Object.Name.Name}}_test_collection"
 )
 
@@ -19,8 +20,6 @@ func TestGet{{.Struct.Object.Name}}(t *testing.T){
 		events = metrics.New(custom.StackDisplay(os.Stdout))
 	}
 
-    api := mdb.New(testCol, events, mdb.NewMongoDB(config))
-
     ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
     defer cancel()
 
@@ -30,14 +29,14 @@ func TestGet{{.Struct.Object.Name}}(t *testing.T){
     }
     tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
 
-    defer api.Delete(ctx, elem.PublicID)
+    defer mdb.Delete(ctx, db, testCol, events, elem.PublicID)
 
-    if err := api.Create(ctx, elem); err != nil {
+    if err := mdb.Create(ctx, db, testCol, events, elem); err != nil {
         tests.Failed("Successfully added record for {{.Struct.Object.Name}} into db: %+q.", err)
     }
     tests.Passed("Successfully added record for {{.Struct.Object.Name}} into db.")
 
-    _, err = api.Get(ctx, elem.PublicID)
+    _, err = mdb.Get(ctx, db, testCol, events, elem.PublicID)
     if err != nil {
         tests.Failed("Successfully retrieved stored record for {{.Struct.Object.Name}} from db: %+q.", err)
     }
@@ -52,8 +51,6 @@ func TestGetAll{{.Struct.Object.Name}}(t *testing.T){
 		events = metrics.New(custom.StackDisplay(os.Stdout))
 	}
 
-	api := mdb.New(testCol, events, mdb.NewMongoDB(config))
-
     ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
 
@@ -63,14 +60,14 @@ func TestGetAll{{.Struct.Object.Name}}(t *testing.T){
 	}
 	tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
 
-    defer api.Delete(ctx, elem.PublicID)
+    defer mdb.Delete(ctx, db, testCol, events, elem.PublicID)
 
-    if err := api.Create(ctx, elem); err != nil {
+    if err := mdb.Create(ctx, db, testCol, events, elem); err != nil {
         tests.Failed("Successfully added record for {{.Struct.Object.Name}} into db: %+q.", err)
     }
     tests.Passed("Successfully added record for {{.Struct.Object.Name}} into db.")
 
-    records, _, err := api.GetAll(ctx, "asc", "public_id", -1, -1)
+    records, _, err := mdb.GetAll(ctx, db, testCol, events, "asc", "public_id", -1, -1)
     if err != nil {
         tests.Failed("Successfully retrieved all records for {{.Struct.Object.Name}} from db: %+q.", err)
     }
@@ -89,7 +86,6 @@ func TestGetAll{{.Struct.Object.Name}}ByOrder(t *testing.T){
 	if testing.Verbose(){
 		events = metrics.New(custom.StackDisplay(os.Stdout))
 	}
-    api := mdb.New(testCol, events, mdb.NewMongoDB(config))
 
     ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
@@ -100,14 +96,14 @@ func TestGetAll{{.Struct.Object.Name}}ByOrder(t *testing.T){
 	}
 	tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
 
-    defer api.Delete(ctx, elem.PublicID)
+    defer mdb.Delete(ctx, db, testCol, events, elem.PublicID)
 
-    if err := api.Create(ctx, elem); err != nil {
+    if err := mdb.Create(ctx, db, testCol, events, elem); err != nil {
         tests.Failed("Successfully added record for {{.Struct.Object.Name}} into db: %+q.", err)
     }
     tests.Passed("Successfully added record for {{.Struct.Object.Name}} into db.")
 
-    records, err := api.GetAllByOrder(ctx, "asc", "public_id")
+    records, err := mdb.GetAllByOrder(ctx, db, testCol, events, "asc", "public_id")
     if err != nil {
         tests.Failed("Successfully retrieved all records for {{.Struct.Object.Name}} from db: %+q.", err)
     }
@@ -126,7 +122,6 @@ func Test{{.Struct.Object.Name}}Create(t *testing.T){
 	if testing.Verbose(){
 		events = metrics.New(custom.StackDisplay(os.Stdout))
 	}
-    api := mdb.New(testCol, events, mdb.NewMongoDB(config))
 
     ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
@@ -137,9 +132,9 @@ func Test{{.Struct.Object.Name}}Create(t *testing.T){
 	}
 	tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
 
-    defer api.Delete(ctx, elem.PublicID)
+    defer mdb.Delete(ctx, db, testCol, events, elem.PublicID)
 
-    if err := api.Create(ctx, elem); err != nil {
+    if err := mdb.Create(ctx, db, testCol, events, elem); err != nil {
         tests.Failed("Successfully added record for {{.Struct.Object.Name}} into db: %+q.", err)
     }
     tests.Passed("Successfully added record for {{.Struct.Object.Name}} into db.")
@@ -153,8 +148,6 @@ func Test{{.Struct.Object.Name}}Update(t *testing.T){
 		events = metrics.New(custom.StackDisplay(os.Stdout))
 	}
 
-    api := mdb.New(testCol, events, mdb.NewMongoDB(config))
-
     ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
 
@@ -164,9 +157,9 @@ func Test{{.Struct.Object.Name}}Update(t *testing.T){
 	}
 	tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
 
-    defer api.Delete(ctx, elem.PublicID)
+    defer mdb.Delete(ctx, db, testCol, events, elem.PublicID)
 
-    if err := api.Create(ctx, elem); err != nil {
+    if err := mdb.Create(ctx, db, testCol, events, elem); err != nil {
         tests.Failed("Successfully added record for {{.Struct.Object.Name}} into db: %+q.", err)
     }
     tests.Passed("Successfully added record for {{.Struct.Object.Name}} into db.")
@@ -179,7 +172,7 @@ func Test{{.Struct.Object.Name}}Update(t *testing.T){
 
 	elem2.PublicID = elem.PublicID
 
-    if err := api.Update(ctx, elem2.PublicID, elem2); err != nil {
+    if err := mdb.Update(ctx, db, testCol, events, elem2.PublicID, elem2); err != nil {
         tests.Failed("Successfully updated record for {{.Struct.Object.Name}} into db: %+q.", err)
     }
     tests.Passed("Successfully updated record for {{.Struct.Object.Name}} into db.")
@@ -192,7 +185,6 @@ func Test{{.Struct.Object.Name}}Delete(t *testing.T){
 	if testing.Verbose(){
 		events = metrics.New(custom.StackDisplay(os.Stdout))
 	}
-    api := mdb.New(testCol, events, mdb.NewMongoDB(config))
 
     ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
 	defer cancel()
@@ -203,17 +195,17 @@ func Test{{.Struct.Object.Name}}Delete(t *testing.T){
 	}
 	tests.Passed("Successfully loaded JSON for {{.Struct.Object.Name}} record")
 
-    if err := api.Create(ctx, elem); err != nil {
+    if err := mdb.Create(ctx, db, testCol, events, elem); err != nil {
         tests.Failed("Successfully added record for {{.Struct.Object.Name}} into db: %+q.", err)
     }
     tests.Passed("Successfully added record for {{.Struct.Object.Name}} into db.")
 
-    if err := api.Delete(ctx, elem.PublicID); err != nil {
+    if err := mdb.Delete(ctx, db, testCol, events, elem.PublicID); err != nil {
         tests.Failed("Successfully removed record for {{.Struct.Object.Name}} into db: %+q.", err)
     }
     tests.Passed("Successfully removed record for {{.Struct.Object.Name}} into db.")
 
-    if _, err = api.Get(ctx, elem.PublicID); err == nil {
+    if _, err = mdb.Get(ctx, db, testCol, events, elem.PublicID); err == nil {
         tests.Failed("Successfully failed to get deleted record for {{.Struct.Object.Name}} into db.")
     }
     tests.Passed("Successfully failed to get deleted record for {{.Struct.Object.Name}} into db.")

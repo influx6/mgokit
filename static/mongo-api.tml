@@ -39,6 +39,12 @@ func GetSession(config Config) (*mgo.Session, error) {
 	return ses, nil
 }
 
+// MongoDB defines a interface which exposes a method for retrieving a
+// mongo.Database and mongo.Session.
+type MongoDB interface {
+	New() (*mgo.Database, *mgo.Session, error)
+}
+
 // NewMongoDB returns a new instance of a MongoServer.
 func NewMongoDB(config Config) MongoDB {
 	var mn mongoServer
@@ -78,12 +84,6 @@ type {{.Struct.Object.Name}}Consumer interface {
 // Validation defines an interface which expose a method to validate a giving type.
 type Validation interface{
 	Validate() error
-}
-
-// MongoDB defines a interface which exposes a method for retrieving a
-// mongo.Database and mongo.Session.
-type MongoDB interface {
-	New() (*mgo.Database, *mgo.Session, error)
 }
 
 // {{.Struct.Object.Name}}DB defines a structure which provide DB CRUD operations

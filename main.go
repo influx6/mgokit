@@ -42,6 +42,7 @@ func main() {
 			generators := ast.NewAnnotationRegistryWith(logs)
 			generators.Register("mongo", mgo.MongoSolo)
 			generators.Register("mongoapi", mgo.MongoGen)
+			generators.Register("mongo_methods", mgo.MongoFuncGen)
 
 			res, err := ast.ParseAnnotations(logs, currentdir)
 			if err != nil {
