@@ -204,7 +204,7 @@ func AddIndex(db MongoDB, metrics metrics.Metrics, col string, indexes ...mgo.In
 }
 
 // Count attempts to return the total number of record from the db.
-func Count(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string,) (int, error) {
+func Count(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string) (int, error) {
 	defer metrics.CollectMetrics("{{.Struct.Object.Name}}DB.Count")
 
     if isContextExpired(ctx) {
@@ -431,7 +431,7 @@ func GetAll(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string
 // GetAllByOrder retrieves all records from the db and returns a slice of {{.Struct.Package}}.{{.Struct.Object.Name}} type.
 // Records using this DB must have a public id value, expressed either by a bson or json tag
 // on the given {{.Struct.Object.Name}} struct.
-func GetAllByOrder(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string, order, orderBy string)  ([]{{.Struct.Package}}.{{.Struct.Object.Name}},  error) {
+func GetAllByOrder(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string, order string, orderBy string)  ([]{{.Struct.Package}}.{{.Struct.Object.Name}},  error) {
 	defer metrics.CollectMetrics("{{.Struct.Object.Name}}DB.GetAllByOrder")
 
 	switch strings.ToLower(order) {

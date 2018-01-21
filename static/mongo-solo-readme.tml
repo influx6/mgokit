@@ -9,13 +9,19 @@ Following methods are implemented:
 ## WithIndex
 
 ```go
-WithIndex(ctx context.Context, col string, indexes ...mgo.Index) error) error
+AddIndex(ctx context.Context, db MongoDB, col string, indexes ...mgo.Index) error) error
+```
+
+## Count
+
+```go
+Count(ctx context.Context, db MongoDB, col string) (int, error)
 ```
 
 ## Exec
 
 ```go
-Exec(ctx context.Context, col string, fx func(col *mgo.Collection) error) error
+Exec(ctx context.Context, db MongoDB, col string, isread bool, fx func(col *mgo.Collection) error) error
 ```
 
 

@@ -1,21 +1,128 @@
+// errors ...
+var (
+    ErrNotFound = errors.New("record not found")
+    ErrExpiredContext = errors.New("context has expired")
+)
+
+//**********************************************************
+// MongoDB Config and Setup
+//**********************************************************
+
+// Config embodies the data used to connect to user's mongo connection.
+type Config struct {
+	DB       string `toml:"db" json:"db"`
+	AuthDB   string `toml:"authdb" json:"authdb"`
+	User     string `toml:"user" json:"user"`
+	Password string `toml:"password" json:"password"`
+	Host     string `toml:"host" json:"host"`
+}
+
+// Empty returns true/false if all Config values are at default/empty/non-set
+// state.
+func (mgc Config) Empty() bool {
+	return mgc.AuthDB == "" &&
+		mgc.DB == "" &&
+		mgc.User == "" &&
+		mgc.Password == "" &&
+		mgc.Host == ""
+}
+
+// Validate returns an error if the config is invalid.
+func (mgc Config) Validate() error {
+	if mgc.User == "" {
+		return errors.New("Config.User is required")
+	}
+	if mgc.Password == "" {
+		return errors.New("Config.Password is required")
+	}
+	if mgc.AuthDB == "" {
+		return errors.New("Config.AuthDB is required")
+	}
+	if mgc.Host == "" {
+		return errors.New("Config.Host is required")
+	}
+	if mgc.DB == "" {
+		return errors.New("Config.DB is required")
+	}
+	return nil
+}
+
+
 // MongoDB defines a interface which exposes a method for retrieving a
 // mongo.Database and mongo.Session.
 type MongoDB interface {
 	New() (*mgo.Database, *mgo.Session, error)
 }
 
-// Config provides configuration for connecting to a db.
-type Config struct {
-	Host     string
-	AuthDB   string
-	DB       string
-	User     string
-	Password string
-	Mode     mgo.Mode
+// NewMongoDB returns a new instance of a MongoDB.
+func NewMongoDB(conf Config) MongoDB {
+	mg := &mongoDB{
+		Config: conf,
+	}
+
+	// Add finalizer to ensure closure of master session.
+	runtime.SetFinalizer(mg, func() {
+		mg.ml.Lock()
+		defer mg.ml.Unlock()
+		if mg.master != nil {
+			mg.master.Close()
+			mg.master = nil
+		}
+	})
+
+	return mg
 }
 
-// GetSession attempts to retrieve the giving session for the given config.
-func GetSession(config Config) (*mgo.Session, error) {
+// mongoDB defines a mongo connection manager that builds
+// allows usage of a giving configuration to generate new mongo
+// sessions and database instances.
+type mongoDB struct {
+	Config
+	ml     sync.Mutex
+	master *mgo.Session
+}
+
+// New returns a new session and database from the giving configuration.
+//
+// Argument:
+//  isread: bool
+//
+// 1. If `isread` is false, then the mgo.Session is cloned so that we re-use the existing
+// sessiby not closing, so others get use ofn connection, in such case, it lets you optimize writes, so try not
+// the session instance connection for other writes.
+//
+// 2. If `isread` is true, then session is copied which creates a new unique session which you
+// should close after use, this lets you handle large reads that may contain complicated queries.
+//
+func (m *mongoDB) New(isread bool) (*mgo.Database, *mgo.Session, error) {
+	m.ml.Lock()
+	defer m.ml.Unlock()
+
+	// if m.master is alive then continue else, reset as empty.
+	if err := m.master.Ping(); err != nil {
+		m.master = nil
+	}
+
+	ses, err := getSession(m.Config)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	m.master = ses
+
+	if isread {
+		copy := m.master.Copy()
+		db := copy.DB(m.Config.DB)
+		return db, copy, nil
+	}
+
+	clone := m.master.Clone()
+	db := clone.DB(m.Config.DB)
+	return db, clone, nil
+}
+
+// getSession attempts to retrieve the giving session for the given config.
+func getSession(config Config) (*mgo.Session, error) {
 	info := mgo.DialInfo{
 		Addrs:    []string{config.Host},
 		Timeout:  60 * time.Second,
@@ -31,66 +138,27 @@ func GetSession(config Config) (*mgo.Session, error) {
 		return nil, err
 	}
 
-	if config.Mode < 0 {
-		config.Mode = mgo.Monotonic
-	}
-
-	ses.SetMode(config.Mode, true)
+	ses.SetMode(mgo.Monotonic, true)
 
 	return ses, nil
 }
 
-// NewMongoDB returns a new instance of a MongoServer.
-func NewMongoDB(config Config) MongoDB {
-	var mn mongoServer
-	mn.Config = config
+//**********************************************************
+// DB Functions
+//**********************************************************
 
-	return &mn
-}
+// AddIndex adds provided index if any to giving collection within database exposed by the provided
+// MongoDB instance.
+func AddIndex(db MongoDB, metrics metrics.Metrics, col string, indexes ...mgo.Index) error {
+	defer metrics.CollectMetrics("{{.Struct.Object.Name}}DB.AddIndex")
 
-// mongoServer defines a mongo connection manager that builds
-// allows usage of a giving configuration to generate new mongo
-// sessions and database instances.
-type mongoServer struct {
-	Config
-}
-
-// New returns a new session and database from the giving configuration.
-func (m *mongoServer) New() (*mgo.Database, *mgo.Session, error) {
-	ses, err := GetSession(m.Config)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return ses.DB(m.Config.DB), ses, nil
-}
-
-// DB defines a structure which provide DB CRUD operations
-// using mongo as the underline db.
-type DB struct{
-  db MongoDB
-  metrics metrics.Metrics
-}
-
-// New returns a new instance of DB.
-func New(m metrics.Metrics,  mo MongoDB) *DB{
-    return &DB{
-        db: mo,
-        metrics: m,
+    if len(indexes) == 0 {
+        return nil
     }
-}
 
-// WithIndex applies the provided index slice to the provided collection configuration.
-func (mdb *DB) WithIndex(ctx context.Context, col string, indexes ...mgo.Index) error {
-	if len(indexes) == 0 {
-		return nil
-	}
-
-	defer mdb.metrics.CollectMetrics("{{.Struct.Object.Name}}DB.Index")
-
-    database, session, err := mdb.db.New()
+    database, session, err := db.New(false)
     if err != nil {
-        mdb.metrics.Emit(metrics.Errorf("Failed to create session for indexes"),metrics.With("collection", col),metrics.With("error", err.Error()))
+        metrics.Emit(metrics.Errorf("Failed to create session for index"),metrics.With("collection", col),metrics.With("error", err.Error()))
         return err
     }
 
@@ -99,53 +167,91 @@ func (mdb *DB) WithIndex(ctx context.Context, col string, indexes ...mgo.Index) 
     collection := database.C(col)
 
     for _, index := range indexes {
-
         if err := collection.EnsureIndex(index); err != nil {
-            mdb.metrics.Emit(metrics.Errorf("Failed to ensure session index"),metrics.With("collection", col),metrics.With("index", index),metrics.With("error", err.Error()))
+            metrics.Emit(metrics.Errorf("Failed to ensure session index"),metrics.With("collection", col),metrics.With("index", index),metrics.With("error", err.Error()))
 
+            incompleteIndex = true
             return err
         }
 
-        mdb.metrics.Emit(metrics.Info("Succeeded in ensuring collection index"),metrics.With("collection", col),metrics.With("index", index))
+        metrics.Emit(metrics.Info("Succeeded in ensuring collection index"),metrics.With("collection", col),metrics.With("index", index))
     }
 
 
-    mdb.metrics.Emit(metrics.Info("Finished adding index").
-    With("collection", col))
-
+    metrics.Emit(metrics.Info("Finished adding index"),metrics.With("collection", col))
     return nil
 }
 
-// Exec provides a function which allows the execution of a custom function against the collection.
-func (mdb *DB) Exec(ctx context.Context, col string, fx func(col *mgo.Collection) error) error {
-	defer mdb.metrics.CollectMetrics("{{.Struct.Object.Name}}DB.Exec")
+// Count attempts to return the total number of record from the db.
+func Count(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string) (int, error) {
+	defer metrics.CollectMetrics("{{.Struct.Object.Name}}DB.Count")
 
-    if context.IsExpired(ctx) {
-        err := fmt.Errorf("Context has expired")
-        mdb.metrics.Emit(metrics.Errorf("Failed to execute operation"),metrics.With("collection", col),metrics.With("error", err.Error()))
+    if isContextExpired(ctx) {
+        err := ErrExpiredContext
+
+        metrics.Emit(metrics.Errorf("Failed to get record count"),metrics.With("collection", col),metrics.With("error", err.Error()))
+        return -1, err
+    }
+
+    database, session, err := db.New(true)
+    if err != nil {
+        metrics.Emit(metrics.Errorf("Failed to get record count"),metrics.With("collection", col),metrics.With("error", err.Error()))
+
+        return -1, err
+    }
+
+    defer session.Close()
+
+    query := bson.M{}
+    total, err := database.C(col).Find(query).Count();
+    if err != nil {
+        metrics.Emit(metrics.Errorf("Failed to get record count"),metrics.With("collection", col),metrics.With("query", query),metrics.With("error", err.Error()))
+
+        return -1, err
+    }
+
+    metrics.Emit(metrics.Info("Deleted record"),metrics.With("collection", col),metrics.With("query", query))
+
+    return total, err
+}
+
+// Exec provides a function which allows the execution of a custom function against the collection.
+func Exec(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string, isread bool, fx func(col *mgo.Collection) error) error {
+	defer metrics.CollectMetrics("{{.Struct.Object.Name}}DB.Exec")
+
+    if isContextExpired(ctx) {
+        err := ErrExpiredContext
+        metrics.Emit(metrics.Errorf("Failed to execute operation"),metrics.With("collection", col),metrics.With("error", err.Error()))
         return err
     }
 
-    database, session, err := mdb.db.New()
+    database, session, err := db.New(isread)
     if err != nil {
-        mdb.metrics.Emit(metrics.Errorf("Failed to create session"),metrics.With("collection", col),metrics.With("error", err.Error()))
+        metrics.Emit(metrics.Errorf("Failed to create session"),metrics.With("collection", col),metrics.With("error", err.Error()))
         return err
     }
 
     defer session.Close()
 
-    if context.IsExpired(ctx) {
-        err := fmt.Errorf("Context has expired")
-        mdb.metrics.Emit(metrics.Errorf("Failed to finish, context has expired"),metrics.With("collection", col),metrics.With("error", err.Error()))
-        return err
-    }
-
     if err := fx(database.C(col)); err != nil {
-        mdb.metrics.Emit(metrics.Errorf("Failed to execute operation"),metrics.With("collection", col),metrics.With("error", err.Error()))
+        metrics.Emit(metrics.Errorf("Failed to execute operation"),metrics.With("collection", col),metrics.With("error", err.Error()))
+        if err == mgo.ErrNotFound {
+            return ErrNotFound
+        }
         return err
     }
 
-    mdb.metrics.Emit(metrics.Info("Operation executed"),metrics.With("collection", col))
+    metrics.Emit(metrics.Info("Operation executed"), metrics.With("collection", col))
 
     return nil
 }
+
+func isContextExpired(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string,) bool {
+    select{
+        case <-ctx.Done():
+            return true
+        default:
+            return false
+    }
+}
+
