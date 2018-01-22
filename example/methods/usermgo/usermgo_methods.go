@@ -2,17 +2,19 @@ package usermgo
 
 import (
 	"errors"
-	"runtime"
-	"sync"
 	"time"
+
+	"runtime"
+
+	"sync"
+
+	"context"
 
 	"strings"
 
 	mgo "gopkg.in/mgo.v2"
 
 	"gopkg.in/mgo.v2/bson"
-
-	"context"
 
 	"github.com/influx6/faux/metrics"
 
@@ -190,8 +192,8 @@ type Validation interface {
 
 // AddIndex adds provided index if any to giving collection within database exposed by the provided
 // MongoDB instance.
-func AddIndex(db MongoDB, metrics metrics.Metrics, col string, indexes ...mgo.Index) error {
-	defer metrics.CollectMetrics("UserDB.AddIndex")
+func AddIndex(db MongoDB, m metrics.Metrics, col string, indexes ...mgo.Index) error {
+	defer m.CollectMetrics("UserDB.AddIndex")
 
 	if len(indexes) == 0 {
 		return nil
@@ -199,7 +201,7 @@ func AddIndex(db MongoDB, metrics metrics.Metrics, col string, indexes ...mgo.In
 
 	database, session, err := db.New(false)
 	if err != nil {
-		metrics.Emit(metrics.("Failed to create session for index"), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to create session for index"), metrics.With("collection", col), metrics.With("error", err.Error()))
 		return err
 	}
 
@@ -209,33 +211,31 @@ func AddIndex(db MongoDB, metrics metrics.Metrics, col string, indexes ...mgo.In
 
 	for _, index := range indexes {
 		if err := collection.EnsureIndex(index); err != nil {
-			metrics.Emit(metrics.Errorf("Failed to ensure session index"), metrics.With("collection", col), metrics.With("index", index), metrics.With("error", err.Error()))
-
-			incompleteIndex = true
+			m.Emit(metrics.Errorf("Failed to ensure session index"), metrics.With("collection", col), metrics.With("index", index), metrics.With("error", err.Error()))
 			return err
 		}
 
-		metrics.Emit(metrics.Info("Succeeded in ensuring collection index"), metrics.With("collection", col), metrics.With("index", index))
+		m.Emit(metrics.Info("Succeeded in ensuring collection index"), metrics.With("collection", col), metrics.With("index", index))
 	}
 
-	metrics.Emit(metrics.Info("Finished adding index"), metrics.With("collection", col))
+	m.Emit(metrics.Info("Finished adding index"), metrics.With("collection", col))
 	return nil
 }
 
 // Count attempts to return the total number of record from the db.
-func Count(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string) (int, error) {
-	defer metrics.CollectMetrics("UserDB.Count")
+func Count(ctx context.Context, db MongoDB, m metrics.Metrics, col string) (int, error) {
+	defer m.CollectMetrics("UserDB.Count")
 
 	if isContextExpired(ctx) {
 		err := ErrExpiredContext
 
-		metrics.Emit(metrics.Errorf("Failed to get record count"), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to get record count"), metrics.With("collection", col), metrics.With("error", err.Error()))
 		return -1, err
 	}
 
 	database, session, err := db.New(true)
 	if err != nil {
-		metrics.Emit(metrics.Errorf("Failed to get record count"), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to get record count"), metrics.With("collection", col), metrics.With("error", err.Error()))
 
 		return -1, err
 	}
@@ -245,12 +245,12 @@ func Count(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string)
 	query := bson.M{}
 	total, err := database.C(col).Find(query).Count()
 	if err != nil {
-		metrics.Emit(metrics.Errorf("Failed to get record count"), metrics.With("collection", col), metrics.With("query", query), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to get record count"), metrics.With("collection", col), metrics.With("query", query), metrics.With("error", err.Error()))
 
 		return -1, err
 	}
 
-	metrics.Emit(metrics.Info("Deleted record"), metrics.With("collection", col), metrics.With("query", query))
+	m.Emit(metrics.Info("Deleted record"), metrics.With("collection", col), metrics.With("query", query))
 
 	return total, err
 }
@@ -258,18 +258,18 @@ func Count(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string)
 // Delete attempts to remove the record from the db using the provided publicID.
 // Records using this DB must have a public id value, expressed either by a bson or json tag
 // on the given methods.User struct.
-func Delete(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string, publicID string) error {
-	defer metrics.CollectMetrics("UserDB.Delete")
+func Delete(ctx context.Context, db MongoDB, m metrics.Metrics, col string, publicID string) error {
+	defer m.CollectMetrics("UserDB.Delete")
 
 	if isContextExpired(ctx) {
 		err := ErrExpiredContext
-		metrics.Emit(metrics.Errorf("Failed to delete record"), metrics.With("publicID", publicID), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to delete record"), metrics.With("publicID", publicID), metrics.With("collection", col), metrics.With("error", err.Error()))
 		return err
 	}
 
 	database, session, err := db.New(false)
 	if err != nil {
-		metrics.Emit(metrics.Errorf("Failed to delete record"), metrics.With("publicID", publicID), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to delete record"), metrics.With("publicID", publicID), metrics.With("collection", col), metrics.With("error", err.Error()))
 		return err
 	}
 
@@ -280,14 +280,14 @@ func Delete(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string
 	}
 
 	if err := database.C(col).Remove(query); err != nil {
-		metrics.Emit(metrics.Errorf("Failed to delete record"), metrics.With("collection", col), metrics.With("query", query), metrics.With("publicID", publicID), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to delete record"), metrics.With("collection", col), metrics.With("query", query), metrics.With("publicID", publicID), metrics.With("error", err.Error()))
 		if err == mgo.ErrNotFound {
 			return ErrNotFound
 		}
 		return err
 	}
 
-	metrics.Emit(metrics.Info("Deleted record"), metrics.With("collection", col), metrics.With("query", query), metrics.With("publicID", publicID))
+	m.Emit(metrics.Info("Deleted record"), metrics.With("collection", col), metrics.With("query", query), metrics.With("publicID", publicID))
 
 	return nil
 }
@@ -296,25 +296,25 @@ func Delete(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string
 // methods.User.
 // Records using this DB must have a public id value, expressed either by a bson or json tag
 // on the given User struct.
-func Create(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string, elem methods.User) error {
-	defer metrics.CollectMetrics("UserDB.Create")
+func Create(ctx context.Context, db MongoDB, m metrics.Metrics, col string, elem methods.User) error {
+	defer m.CollectMetrics("UserDB.Create")
 
 	if isContextExpired(ctx) {
 		err := ErrExpiredContext
-		metrics.Emit(metrics.Errorf("Failed to create record"), metrics.With("publicID", elem.PublicID), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to create record"), metrics.With("publicID", elem.PublicID), metrics.With("collection", col), metrics.With("error", err.Error()))
 		return err
 	}
 
 	if validator, ok := interface{}(elem).(Validation); ok {
 		if err := validator.Validate(); err != nil {
-			metrics.Emit(metrics.Errorf("Failed to apply index"), metrics.With("collection", col), metrics.With("error", err.Error()))
+			m.Emit(metrics.Errorf("Failed to apply index"), metrics.With("collection", col), metrics.With("error", err.Error()))
 			return err
 		}
 	}
 
 	database, session, err := db.New(false)
 	if err != nil {
-		metrics.Emit(metrics.Errorf("Failed to create session"), metrics.With("publicID", elem.PublicID), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to create session"), metrics.With("publicID", elem.PublicID), metrics.With("collection", col), metrics.With("error", err.Error()))
 		return err
 	}
 
@@ -328,11 +328,11 @@ func Create(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string
 	})
 
 	if err := database.C(col).Insert(query); err != nil {
-		metrics.Emit(metrics.Errorf("Failed to create User record"), metrics.With("collection", col), metrics.With("query", query), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to create User record"), metrics.With("collection", col), metrics.With("query", query), metrics.With("error", err.Error()))
 		return err
 	}
 
-	metrics.Emit(metrics.Info("Create record"), metrics.With("collection", col), metrics.With("query", query))
+	m.Emit(metrics.Info("Create record"), metrics.With("collection", col), metrics.With("query", query))
 
 	return nil
 }
@@ -340,8 +340,8 @@ func Create(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string
 // GetAll retrieves all records from the db and returns a slice of methods.User type.
 // Records using this DB must have a public id value, expressed either by a bson or json tag
 // on the given User struct.
-func GetAll(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string, order string, orderBy string, page int, responsePerPage int) ([]methods.User, int, error) {
-	defer metrics.CollectMetrics("UserDB.GetAll")
+func GetAll(ctx context.Context, db MongoDB, m metrics.Metrics, col string, order string, orderBy string, page int, responsePerPage int) ([]methods.User, int, error) {
+	defer m.CollectMetrics("UserDB.GetAll")
 
 	switch strings.ToLower(order) {
 	case "dsc", "desc":
@@ -350,17 +350,17 @@ func GetAll(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string
 
 	if isContextExpired(ctx) {
 		err := ErrExpiredContext
-		metrics.Emit(metrics.Errorf("Failed to retrieve record"), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to retrieve record"), metrics.With("collection", col), metrics.With("error", err.Error()))
 		return nil, -1, err
 	}
 
 	if page <= 0 && responsePerPage <= 0 {
-		records, err := GetAllByOrder(ctx, order, orderBy)
+		records, err := GetAllByOrder(ctx, db, m, col, order, orderBy)
 		return records, len(records), err
 	}
 
 	// Get total number of records.
-	totalRecords, err := Count(ctx)
+	totalRecords, err := Count(ctx, db, m, col)
 	if err != nil {
 		return nil, -1, err
 	}
@@ -379,7 +379,7 @@ func GetAll(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string
 		}
 	}
 
-	metrics.Emit(
+	m.Emit(
 		metrics.Info("DB:Query:GetAllPerPage"),
 		metrics.WithFields(metrics.Field{
 			"starting_index":       indexToStart,
@@ -393,7 +393,7 @@ func GetAll(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string
 
 	database, session, err := db.New(true)
 	if err != nil {
-		metrics.Emit(metrics.Errorf("Failed to create session"), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to create session"), metrics.With("collection", col), metrics.With("error", err.Error()))
 		return nil, -1, err
 	}
 
@@ -404,7 +404,7 @@ func GetAll(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string
 	var ritems []methods.User
 
 	if err := database.C(col).Find(query).Skip(indexToStart).Limit(totalWanted).Sort(orderBy).All(&ritems); err != nil {
-		metrics.Emit(metrics.Errorf("Failed to retrieve all records of User type from db"), metrics.With("collection", col), metrics.With("query", query), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to retrieve all records of User type from db"), metrics.With("collection", col), metrics.With("query", query), metrics.With("error", err.Error()))
 		if err == mgo.ErrNotFound {
 			return nil, -1, ErrNotFound
 		}
@@ -417,8 +417,8 @@ func GetAll(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string
 // GetAllByOrder retrieves all records from the db and returns a slice of methods.User type.
 // Records using this DB must have a public id value, expressed either by a bson or json tag
 // on the given User struct.
-func GetAllByOrder(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string, order string, orderBy string) ([]methods.User, error) {
-	defer metrics.CollectMetrics("UserDB.GetAllByOrder")
+func GetAllByOrder(ctx context.Context, db MongoDB, m metrics.Metrics, col string, order string, orderBy string) ([]methods.User, error) {
+	defer m.CollectMetrics("UserDB.GetAllByOrder")
 
 	switch strings.ToLower(order) {
 	case "dsc", "desc":
@@ -427,14 +427,13 @@ func GetAllByOrder(ctx context.Context, db MongoDB, metrics metrics.Metrics, col
 
 	if isContextExpired(ctx) {
 		err := ErrExpiredContext
-
-		metrics.Emit(metrics.Errorf("Failed to retrieve record"), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to retrieve record"), metrics.With("collection", col), metrics.With("error", err.Error()))
 		return nil, err
 	}
 
 	database, session, err := db.New(true)
 	if err != nil {
-		metrics.Emit(metrics.Errorf("Failed to create session"), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to create session"), metrics.With("collection", col), metrics.With("error", err.Error()))
 		return nil, err
 	}
 
@@ -444,7 +443,7 @@ func GetAllByOrder(ctx context.Context, db MongoDB, metrics metrics.Metrics, col
 
 	var items []methods.User
 	if err := database.C(col).Find(query).Sort(orderBy).All(&items); err != nil {
-		metrics.Emit(metrics.Errorf("Failed to retrieve all records of User type from db"), metrics.With("collection", col), metrics.With("query", query), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to retrieve all records of User type from db"), metrics.With("collection", col), metrics.With("query", query), metrics.With("error", err.Error()))
 		if err == mgo.ErrNotFound {
 			return nil, ErrNotFound
 		}
@@ -459,19 +458,19 @@ func GetAllByOrder(ctx context.Context, db MongoDB, metrics metrics.Metrics, col
 // returns the methods.User type.
 // Records using this DB must have a public id value, expressed either by a bson or json tag
 // on the given User struct.
-func GetByField(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string, key string, value interface{}) (methods.User, error) {
-	defer metrics.CollectMetrics("UserDB.GetByFiled")
+func GetByField(ctx context.Context, db MongoDB, m metrics.Metrics, col string, key string, value interface{}) (methods.User, error) {
+	defer m.CollectMetrics("UserDB.GetByFiled")
 
 	if isContextExpired(ctx) {
 		err := ErrExpiredContext
-		metrics.Emit(metrics.Errorf("Failed to retrieve record"), metrics.With(key, value), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to retrieve record"), metrics.With(key, value), metrics.With("collection", col), metrics.With("error", err.Error()))
 
 		return methods.User{}, err
 	}
 
 	database, session, err := db.New(true)
 	if err != nil {
-		metrics.Emit(metrics.Errorf("Failed to create session"), metrics.With(key, value), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to create session"), metrics.With(key, value), metrics.With("collection", col), metrics.With("error", err.Error()))
 
 		return methods.User{}, err
 	}
@@ -483,7 +482,7 @@ func GetByField(ctx context.Context, db MongoDB, metrics metrics.Metrics, col st
 	var item methods.User
 
 	if err := database.C(col).Find(query).One(&item); err != nil {
-		metrics.Emit(metrics.Errorf("Failed to retrieve all records of User type from db"), metrics.With("query", query), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to retrieve all records of User type from db"), metrics.With("query", query), metrics.With("collection", col), metrics.With("error", err.Error()))
 		if err == mgo.ErrNotFound {
 			return methods.User{}, ErrNotFound
 		}
@@ -497,18 +496,18 @@ func GetByField(ctx context.Context, db MongoDB, metrics metrics.Metrics, col st
 // Get retrieves a record from the db using the publicID and returns the methods.User type.
 // Records using this DB must have a public id value, expressed either by a bson or json tag
 // on the given User struct.
-func Get(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string, publicID string) (methods.User, error) {
-	defer metrics.CollectMetrics("UserDB.Get")
+func Get(ctx context.Context, db MongoDB, m metrics.Metrics, col string, publicID string) (methods.User, error) {
+	defer m.CollectMetrics("UserDB.Get")
 
 	if isContextExpired(ctx) {
 		err := ErrExpiredContext
-		metrics.Emit(metrics.Errorf("Failed to retrieve record"), metrics.With("publicID", publicID), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to retrieve record"), metrics.With("publicID", publicID), metrics.With("collection", col), metrics.With("error", err.Error()))
 		return methods.User{}, err
 	}
 
 	database, session, err := db.New(true)
 	if err != nil {
-		metrics.Emit(metrics.Errorf("Failed to create session"), metrics.With("publicID", publicID), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to create session"), metrics.With("publicID", publicID), metrics.With("collection", col), metrics.With("error", err.Error()))
 		return methods.User{}, err
 	}
 
@@ -519,7 +518,7 @@ func Get(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string, p
 	var item methods.User
 
 	if err := database.C(col).Find(query).One(&item); err != nil {
-		metrics.Emit(metrics.Errorf("Failed to retrieve all records of User type from db"), metrics.With("query", query), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to retrieve all records of User type from db"), metrics.With("query", query), metrics.With("collection", col), metrics.With("error", err.Error()))
 		if err == mgo.ErrNotFound {
 			return methods.User{}, ErrNotFound
 		}
@@ -533,25 +532,25 @@ func Get(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string, p
 // Update uses a record from the db using the publicID and returns the methods.User type.
 // Records using this DB must have a public id value, expressed either by a bson or json tag
 // on the given User struct.
-func Update(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string, publicID string, elem methods.User) error {
-	defer metrics.CollectMetrics("UserDB.Update")
+func Update(ctx context.Context, db MongoDB, m metrics.Metrics, col string, publicID string, elem methods.User) error {
+	defer m.CollectMetrics("UserDB.Update")
 
 	if isContextExpired(ctx) {
 		err := ErrExpiredContext
-		metrics.Emit(metrics.Errorf("Failed to finish, context has expired"), metrics.With("collection", col), metrics.With("public_id", publicID), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to finish, context has expired"), metrics.With("collection", col), metrics.With("public_id", publicID), metrics.With("error", err.Error()))
 		return err
 	}
 
 	if validator, ok := interface{}(elem).(Validation); ok {
 		if err := validator.Validate(); err != nil {
-			metrics.Emit(metrics.Errorf("Failed to apply index"), metrics.With("collection", col), metrics.With("public_id", publicID), metrics.With("error", err.Error()))
+			m.Emit(metrics.Errorf("Failed to apply index"), metrics.With("collection", col), metrics.With("public_id", publicID), metrics.With("error", err.Error()))
 			return err
 		}
 	}
 
 	database, session, err := db.New(false)
 	if err != nil {
-		metrics.Emit(metrics.Errorf("Failed to create session"), metrics.With("publicID", publicID), metrics.With("collection", col), metrics.With("public_id", publicID), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to create session"), metrics.With("publicID", publicID), metrics.With("collection", col), metrics.With("public_id", publicID), metrics.With("error", err.Error()))
 		return err
 	}
 
@@ -566,45 +565,45 @@ func Update(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string
 		"public_id": elem.PublicID,
 	})
 	if err := database.C(col).Update(query, queryData); err != nil {
-		metrics.Emit(metrics.Errorf("Failed to update User record"), metrics.With("collection", col), metrics.With("query", query), metrics.With("data", queryData), metrics.With("public_id", publicID), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to update User record"), metrics.With("collection", col), metrics.With("query", query), metrics.With("data", queryData), metrics.With("public_id", publicID), metrics.With("error", err.Error()))
 		if err == mgo.ErrNotFound {
 			return ErrNotFound
 		}
 		return err
 	}
 
-	metrics.Emit(metrics.Info("Update record"), metrics.With("collection", col), metrics.With("public_id", publicID), metrics.With("query", query))
+	m.Emit(metrics.Info("Update record"), metrics.With("collection", col), metrics.With("public_id", publicID), metrics.With("query", query))
 
 	return nil
 }
 
 // Exec provides a function which allows the execution of a custom function against the collection.
-func Exec(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string, isread bool, fx func(col *mgo.Collection) error) error {
-	defer metrics.CollectMetrics("UserDB.Exec")
+func Exec(ctx context.Context, db MongoDB, m metrics.Metrics, col string, isread bool, fx func(col *mgo.Collection) error) error {
+	defer m.CollectMetrics("UserDB.Exec")
 
 	if isContextExpired(ctx) {
 		err := ErrExpiredContext
-		metrics.Emit(metrics.Errorf("Failed to execute operation"), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to execute operation"), metrics.With("collection", col), metrics.With("error", err.Error()))
 		return err
 	}
 
 	database, session, err := db.New(isread)
 	if err != nil {
-		metrics.Emit(metrics.Errorf("Failed to create session"), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to create session"), metrics.With("collection", col), metrics.With("error", err.Error()))
 		return err
 	}
 
 	defer session.Close()
 
 	if err := fx(database.C(col)); err != nil {
-		metrics.Emit(metrics.Errorf("Failed to execute operation"), metrics.With("collection", col), metrics.With("error", err.Error()))
+		m.Emit(metrics.Errorf("Failed to execute operation"), metrics.With("collection", col), metrics.With("error", err.Error()))
 		if err == mgo.ErrNotFound {
 			return ErrNotFound
 		}
 		return err
 	}
 
-	metrics.Emit(metrics.Info("Operation executed"), metrics.With("collection", col))
+	m.Emit(metrics.Info("Operation executed"), metrics.With("collection", col))
 
 	return nil
 }

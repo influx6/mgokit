@@ -149,7 +149,7 @@ func getSession(config Config) (*mgo.Session, error) {
 
 // AddIndex adds provided index if any to giving collection within database exposed by the provided
 // MongoDB instance.
-func AddIndex(db MongoDB, metrics metrics.Metrics, col string, indexes ...mgo.Index) error {
+func AddIndex(db MongoDB, m metrics.Metrics, col string, indexes ...mgo.Index) error {
 	defer m.CollectMetrics("DB.AddIndex")
 
     if len(indexes) == 0 {
@@ -169,8 +169,6 @@ func AddIndex(db MongoDB, metrics metrics.Metrics, col string, indexes ...mgo.In
     for _, index := range indexes {
         if err := collection.EnsureIndex(index); err != nil {
             m.Emit(metrics.Errorf("Failed to ensure session index"),metrics.With("collection", col),metrics.With("index", index),metrics.With("error", err.Error()))
-
-            incompleteIndex = true
             return err
         }
 
@@ -183,7 +181,7 @@ func AddIndex(db MongoDB, metrics metrics.Metrics, col string, indexes ...mgo.In
 }
 
 // Count attempts to return the total number of record from the db.
-func Count(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string) (int, error) {
+func Count(ctx context.Context, db MongoDB, m metrics.Metrics, col string) (int, error) {
 	defer m.CollectMetrics("DB.Count")
 
     if isContextExpired(ctx) {
@@ -246,7 +244,7 @@ func Exec(ctx context.Context, db MongoDB, m metrics.Metrics, col string, isread
     return nil
 }
 
-func isContextExpired(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string,) bool {
+func isContextExpired(ctx context.Context) bool {
     select{
         case <-ctx.Done():
             return true

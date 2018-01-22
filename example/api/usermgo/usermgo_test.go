@@ -9,8 +9,6 @@ import (
 
 	"testing"
 
-	mgo "gopkg.in/mgo.v2"
-
 	"github.com/influx6/faux/tests"
 
 	"github.com/influx6/faux/metrics"
@@ -24,7 +22,6 @@ import (
 
 var (
 	config = mdb.Config{
-		Mode:     mgo.Monotonic,
 		DB:       os.Getenv("API_MONGO_TEST_DB"),
 		Host:     os.Getenv("API_MONGO_TEST_HOST"),
 		User:     os.Getenv("API_MONGO_TEST_USER"),

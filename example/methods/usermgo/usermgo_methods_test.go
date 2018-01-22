@@ -9,8 +9,6 @@ import (
 
 	"testing"
 
-	mgo "gopkg.in/mgo.v2"
-
 	"github.com/influx6/faux/tests"
 
 	"github.com/influx6/faux/metrics"
@@ -24,7 +22,6 @@ import (
 
 var (
 	config = mdb.Config{
-		Mode:     mgo.Monotonic,
 		DB:       os.Getenv("METHODS_MONGO_TEST_DB"),
 		Host:     os.Getenv("METHODS_MONGO_TEST_HOST"),
 		User:     os.Getenv("METHODS_MONGO_TEST_USER"),
@@ -53,14 +50,14 @@ func TestGetUser(t *testing.T) {
 	}
 	tests.Passed("Successfully loaded JSON for User record")
 
-	defer mdb.Delete(ctx, db, testCol, events, elem.PublicID)
+	defer mdb.Delete(ctx, db, events, testCol, elem.PublicID)
 
-	if err := mdb.Create(ctx, db, testCol, events, elem); err != nil {
+	if err := mdb.Create(ctx, db, events, testCol, elem); err != nil {
 		tests.Failed("Successfully added record for User into db: %+q.", err)
 	}
 	tests.Passed("Successfully added record for User into db.")
 
-	_, err = mdb.Get(ctx, db, testCol, events, elem.PublicID)
+	_, err = mdb.Get(ctx, db, events, testCol, elem.PublicID)
 	if err != nil {
 		tests.Failed("Successfully retrieved stored record for User from db: %+q.", err)
 	}
@@ -84,14 +81,14 @@ func TestGetAllUser(t *testing.T) {
 	}
 	tests.Passed("Successfully loaded JSON for User record")
 
-	defer mdb.Delete(ctx, db, testCol, events, elem.PublicID)
+	defer mdb.Delete(ctx, db, events, testCol, elem.PublicID)
 
-	if err := mdb.Create(ctx, db, testCol, events, elem); err != nil {
+	if err := mdb.Create(ctx, db, events, testCol, elem); err != nil {
 		tests.Failed("Successfully added record for User into db: %+q.", err)
 	}
 	tests.Passed("Successfully added record for User into db.")
 
-	records, _, err := mdb.GetAll(ctx, db, testCol, events, "asc", "public_id", -1, -1)
+	records, _, err := mdb.GetAll(ctx, db, events, testCol, "asc", "public_id", -1, -1)
 	if err != nil {
 		tests.Failed("Successfully retrieved all records for User from db: %+q.", err)
 	}
@@ -120,14 +117,14 @@ func TestGetAllUserByOrder(t *testing.T) {
 	}
 	tests.Passed("Successfully loaded JSON for User record")
 
-	defer mdb.Delete(ctx, db, testCol, events, elem.PublicID)
+	defer mdb.Delete(ctx, db, events, testCol, elem.PublicID)
 
-	if err := mdb.Create(ctx, db, testCol, events, elem); err != nil {
+	if err := mdb.Create(ctx, db, events, testCol, elem); err != nil {
 		tests.Failed("Successfully added record for User into db: %+q.", err)
 	}
 	tests.Passed("Successfully added record for User into db.")
 
-	records, err := mdb.GetAllByOrder(ctx, db, testCol, events, "asc", "public_id")
+	records, err := mdb.GetAllByOrder(ctx, db, events, testCol, "asc", "public_id")
 	if err != nil {
 		tests.Failed("Successfully retrieved all records for User from db: %+q.", err)
 	}
@@ -156,9 +153,9 @@ func TestUserCreate(t *testing.T) {
 	}
 	tests.Passed("Successfully loaded JSON for User record")
 
-	defer mdb.Delete(ctx, db, testCol, events, elem.PublicID)
+	defer mdb.Delete(ctx, db, events, testCol, elem.PublicID)
 
-	if err := mdb.Create(ctx, db, testCol, events, elem); err != nil {
+	if err := mdb.Create(ctx, db, events, testCol, elem); err != nil {
 		tests.Failed("Successfully added record for User into db: %+q.", err)
 	}
 	tests.Passed("Successfully added record for User into db.")
@@ -181,9 +178,9 @@ func TestUserUpdate(t *testing.T) {
 	}
 	tests.Passed("Successfully loaded JSON for User record")
 
-	defer mdb.Delete(ctx, db, testCol, events, elem.PublicID)
+	defer mdb.Delete(ctx, db, events, testCol, elem.PublicID)
 
-	if err := mdb.Create(ctx, db, testCol, events, elem); err != nil {
+	if err := mdb.Create(ctx, db, events, testCol, elem); err != nil {
 		tests.Failed("Successfully added record for User into db: %+q.", err)
 	}
 	tests.Passed("Successfully added record for User into db.")
@@ -196,7 +193,7 @@ func TestUserUpdate(t *testing.T) {
 
 	elem2.PublicID = elem.PublicID
 
-	if err := mdb.Update(ctx, db, testCol, events, elem2.PublicID, elem2); err != nil {
+	if err := mdb.Update(ctx, db, events, testCol, elem2.PublicID, elem2); err != nil {
 		tests.Failed("Successfully updated record for User into db: %+q.", err)
 	}
 	tests.Passed("Successfully updated record for User into db.")
@@ -219,17 +216,17 @@ func TestUserDelete(t *testing.T) {
 	}
 	tests.Passed("Successfully loaded JSON for User record")
 
-	if err := mdb.Create(ctx, db, testCol, events, elem); err != nil {
+	if err := mdb.Create(ctx, db, events, testCol, elem); err != nil {
 		tests.Failed("Successfully added record for User into db: %+q.", err)
 	}
 	tests.Passed("Successfully added record for User into db.")
 
-	if err := mdb.Delete(ctx, db, testCol, events, elem.PublicID); err != nil {
+	if err := mdb.Delete(ctx, db, events, testCol, elem.PublicID); err != nil {
 		tests.Failed("Successfully removed record for User into db: %+q.", err)
 	}
 	tests.Passed("Successfully removed record for User into db.")
 
-	if _, err = mdb.Get(ctx, db, testCol, events, elem.PublicID); err == nil {
+	if _, err = mdb.Get(ctx, db, events, testCol, elem.PublicID); err == nil {
 		tests.Failed("Successfully failed to get deleted record for User into db.")
 	}
 	tests.Passed("Successfully failed to get deleted record for User into db.")

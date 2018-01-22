@@ -1,6 +1,5 @@
 var (
     config = mdb.Config{
-        Mode: mgo.Monotonic,
         DB: os.Getenv("{{.ENVName}}_MONGO_TEST_DB"),
         Host: os.Getenv("{{.ENVName}}_MONGO_TEST_HOST"),
         User: os.Getenv("{{.ENVName}}_MONGO_TEST_USER"),
