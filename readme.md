@@ -116,7 +116,7 @@ they are the means the generated code uses to get data to be saved and sets inte
 
 ```go
 type UserFields  interface {
-	Fields() map[string]interface{}
+	Fields() (map[string]interface{}, error)
 }
 
 type UserConsumer interface {
