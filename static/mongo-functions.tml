@@ -286,7 +286,7 @@ func Create(ctx context.Context, db MongoDB, m metrics.Metrics, col string, elem
 
 	if validator, ok := interface{}(elem).(Validation); ok {
 		if err := validator.Validate(); err != nil {
-			m.Emit(metrics.Errorf("Failed to apply index"),metrics.With("collection", col),metrics.With("error", err.Error()))
+			m.Emit(metrics.Errorf("Failed to validate record"),metrics.With("collection", col),metrics.With("error", err.Error()))
 			return err
 		}
 	}
@@ -621,7 +621,7 @@ func Update(ctx context.Context, db MongoDB, m metrics.Metrics, col string, publ
 
 	if validator, ok := interface{}(elem).(Validation); ok {
 		if err := validator.Validate(); err != nil {
-			m.Emit(metrics.Errorf("Failed to apply index"),metrics.With("collection", col),metrics.With("public_id", publicID),metrics.With("error", err.Error()))
+			m.Emit(metrics.Errorf("Failed to validate record"),metrics.With("collection", col),metrics.With("public_id", publicID),metrics.With("error", err.Error()))
 			return err
 		}
 	}

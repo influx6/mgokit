@@ -330,7 +330,8 @@ func (mdb *{{.Struct.Object.Name}}DB) Create(ctx context.Context, elem {{.Struct
 
 	if validator, ok := interface{}(elem).(Validation); ok {
 		if err := validator.Validate(); err != nil {
-			mdb.metrics.Emit(metrics.Errorf("Failed to apply index"),metrics.With("collection", mdb.col),metrics.With("error", err.Error()))
+			mdb.metrics.Emit(metrics.Errorf("Failed to validate record"),
+			metrics.With("collection", mdb.col),metrics.With("error", err.Error()))
 			return err
 		}
 	}
@@ -692,7 +693,7 @@ func (mdb *{{.Struct.Object.Name}}DB) Update(ctx context.Context, publicID strin
 
 	if validator, ok := interface{}(elem).(Validation); ok {
 		if err := validator.Validate(); err != nil {
-			mdb.metrics.Emit(metrics.Errorf("Failed to apply index"),metrics.With("collection", mdb.col),metrics.With("public_id", publicID),metrics.With("error", err.Error()))
+			mdb.metrics.Emit(metrics.Errorf("Failed to validate record"),metrics.With("collection", mdb.col),metrics.With("public_id", publicID),metrics.With("error", err.Error()))
 			return err
 		}
 	}
