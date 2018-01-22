@@ -609,7 +609,7 @@ func Exec(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string, 
 	return nil
 }
 
-func isContextExpired(ctx context.Context, db MongoDB, metrics metrics.Metrics, col string) bool {
+func isContextExpired(ctx context.Context) bool {
 	select {
 	case <-ctx.Done():
 		return true
