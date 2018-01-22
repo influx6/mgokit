@@ -199,7 +199,7 @@ func AddIndex(db MongoDB, metrics metrics.Metrics, col string, indexes ...mgo.In
 
 	database, session, err := db.New(false)
 	if err != nil {
-		metrics.Emit(metrics.Errorf("Failed to create session for index"), metrics.With("collection", col), metrics.With("error", err.Error()))
+		metrics.Emit(metrics.("Failed to create session for index"), metrics.With("collection", col), metrics.With("error", err.Error()))
 		return err
 	}
 
