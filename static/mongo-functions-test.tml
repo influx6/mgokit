@@ -1,10 +1,10 @@
 var (
     config = mdb.Config{
-        DB: os.Getenv("{{.ENVName}}_MONGO_TEST_DB"),
-        Host: os.Getenv("{{.ENVName}}_MONGO_TEST_HOST"),
-        User: os.Getenv("{{.ENVName}}_MONGO_TEST_USER"),
-        AuthDB: os.Getenv("{{.ENVName}}_MONGO_TEST_AUTHDB"),
-        Password: os.Getenv("{{.ENVName}}_MONGO_TEST_PASSWORD"),
+        DB: os.Getenv("MONGO_TEST_DB"),
+        Host: os.Getenv("MONGO_TEST_HOST"),
+        User: os.Getenv("MONGO_TEST_USER"),
+        AuthDB: os.Getenv("MONGO_TEST_AUTHDB"),
+        Password: os.Getenv("MONGO_TEST_PASSWORD"),
     }
 
 	db = mdb.NewMongoDB(config)

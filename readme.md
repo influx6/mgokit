@@ -100,11 +100,19 @@ type User struct {
 }
 ```
 
-Mgokit expects structs to match specific interfaces, which allows it to function as seperate from the declared struct has much has possible, because the interfaces allow to perform serialization and deserialization.
+## Interfaces
 
-Each interface is included with all generated files.
+Sqlkit will generate specific interfaces where each allows the internal functions validate struct validity and are able to get and consume maps containing record details.
 
-Sample interfaces to be implemented for `User` struct (only one set is needed):
+
+```go
+type Validate interface{
+	Validate() error
+}
+```
+
+These are required and must be added to target struct as 
+they are the means the generated code uses to get data to be saved and sets internal struct's fields:
 
 ```go
 type UserFields  interface {
@@ -114,48 +122,5 @@ type UserFields  interface {
 type UserConsumer interface {
 	Consume(map[string]interface{}) error
 }
-```
-
-```go
-type UserBSONConsumer interface {
-	BSONConsume(bson.M) error
-}
-
-type UserBSON interface {
-	BSON() bson.M
-}
-```
-
-## Customization
-
-If you wish to use a custome name prefix for the config environment variables names generating in the test, then setting 
-a attribute of `ENVName` on the attribute will generate a config in the ff format:
-
-```go
-// @sql(ENVName => BOB)
-```
-
-```go
-    config = mdb.Config{
-        Mode: mgo.Monotonic,
-        DB: os.Getenv("{{.ENVName}}_MONGO_TEST_DB"),
-        Host: os.Getenv("{{.ENVName}}_MONGO_TEST_HOST"),
-        User: os.Getenv("{{.ENVName}}_MONGO_TEST_USER"),
-        AuthDB: os.Getenv("{{.ENVName}}_MONGO_TEST_AUTHDB"),
-        Password: os.Getenv("{{.ENVName}}_MONGO_TEST_PASSWORD"),
-    }
-```
-
-Will result in:
-
-```go
-    config = mdb.Config{
-        Mode: mgo.Monotonic,
-        DB: os.Getenv("BOB_MONGO_TEST_DB"),
-        Host: os.Getenv("BOB_MONGO_TEST_HOST"),
-        User: os.Getenv("BOB_MONGO_TEST_USER"),
-        AuthDB: os.Getenv("BOB_MONGO_TEST_AUTHDB"),
-        Password: os.Getenv("BOB_MONGO_TEST_PASSWORD"),
-    }
 ```
 
