@@ -72,6 +72,7 @@ func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDecl
 			),
 			gen.Block(
 				gen.SourceTextWith(
+					"mongo:api-test",
 					string(static.MustReadFile("mongo-api-test.tml", true)),
 					gen.ToTemplateFuncs(
 						ast.ASTTemplatFuncs,
@@ -98,6 +99,7 @@ func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDecl
 	mongoMakefileGen := gen.Block(
 		gen.Block(
 			gen.SourceText(
+				"mongo:makefile",
 				string(static.MustReadFile("makefile.tml", true)),
 				struct {
 					Pkg          *ast.PackageDeclaration
@@ -121,6 +123,7 @@ func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDecl
 	mongoDockerfileGen := gen.Block(
 		gen.Block(
 			gen.SourceText(
+				"mongo:dockerfile",
 				string(static.MustReadFile("dockerfile.tml", true)),
 				struct {
 					Pkg          *ast.PackageDeclaration
@@ -144,6 +147,7 @@ func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDecl
 	mongoReadmeGen := gen.Block(
 		gen.Block(
 			gen.SourceText(
+				"mongo:readme",
 				string(static.MustReadFile("mongo-api-readme.tml", true)),
 				struct {
 					Pkg          *ast.PackageDeclaration
@@ -171,6 +175,7 @@ func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDecl
 			),
 			gen.Block(
 				gen.SourceTextWith(
+					"mongo:fixtures",
 					string(static.MustReadFile("mongo-api-json.tml", true)),
 					gen.ToTemplateFuncs(
 						ast.ASTTemplatFuncs,
@@ -203,6 +208,7 @@ func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDecl
 			),
 			gen.Block(
 				gen.SourceTextWith(
+					"mongo:backend",
 					string(static.MustReadFile("mongo-api-backend.tml", true)),
 					gen.ToTemplateFuncs(
 						ast.ASTTemplatFuncs,
@@ -224,9 +230,6 @@ func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDecl
 	)
 
 	mongoGen := gen.Block(
-		gen.Commentary(
-			gen.SourceText(`Package `+packageName+` provides a auto-generated package which contains a sql CRUD API for the specific {{.Object.Name}} struct in package {{.Package}}.`, str),
-		),
 		gen.Package(
 			gen.Name(packageName),
 			gen.Imports(
@@ -243,6 +246,7 @@ func MongoGen(toPackage string, an ast.AnnotationDeclaration, str ast.StructDecl
 			),
 			gen.Block(
 				gen.SourceTextWith(
+					"mongo:api",
 					string(static.MustReadFile("mongo-api.tml", true)),
 					gen.ToTemplateFuncs(
 						ast.ASTTemplatFuncs,
@@ -362,6 +366,7 @@ func MongoFuncGen(toPackage string, an ast.AnnotationDeclaration, str ast.Struct
 			),
 			gen.Block(
 				gen.SourceTextWith(
+					"mongo:functions",
 					string(static.MustReadFile("mongo-functions-test.tml", true)),
 					gen.ToTemplateFuncs(
 						ast.ASTTemplatFuncs,
@@ -388,6 +393,7 @@ func MongoFuncGen(toPackage string, an ast.AnnotationDeclaration, str ast.Struct
 	mongoMakefileGen := gen.Block(
 		gen.Block(
 			gen.SourceText(
+				"mongo:make-file",
 				string(static.MustReadFile("makefile.tml", true)),
 				struct {
 					Pkg          *ast.PackageDeclaration
@@ -411,6 +417,7 @@ func MongoFuncGen(toPackage string, an ast.AnnotationDeclaration, str ast.Struct
 	mongoDockerfileGen := gen.Block(
 		gen.Block(
 			gen.SourceText(
+				"mongo:dockerfile",
 				string(static.MustReadFile("dockerfile.tml", true)),
 				struct {
 					Pkg          *ast.PackageDeclaration
@@ -440,6 +447,7 @@ func MongoFuncGen(toPackage string, an ast.AnnotationDeclaration, str ast.Struct
 			),
 			gen.Block(
 				gen.SourceTextWith(
+					"mongo:api-json",
 					string(static.MustReadFile("mongo-api-json.tml", true)),
 					gen.ToTemplateFuncs(
 						ast.ASTTemplatFuncs,
@@ -480,6 +488,7 @@ func MongoFuncGen(toPackage string, an ast.AnnotationDeclaration, str ast.Struct
 			),
 			gen.Block(
 				gen.SourceTextWith(
+					"mongo:functions",
 					string(static.MustReadFile("mongo-functions.tml", true)),
 					gen.ToTemplateFuncs(
 						ast.ASTTemplatFuncs,
@@ -535,6 +544,7 @@ func MongoSolo(toDir string, an ast.AnnotationDeclaration, pkgDeclr ast.PackageD
 	mongoReadmeGen := gen.Block(
 		gen.Block(
 			gen.SourceText(
+				"mongo:readme",
 				string(static.MustReadFile("mongo-solo-readme.tml", true)),
 				struct {
 					Pkg     *ast.PackageDeclaration
@@ -565,6 +575,7 @@ func MongoSolo(toDir string, an ast.AnnotationDeclaration, pkgDeclr ast.PackageD
 			),
 			gen.Block(
 				gen.SourceTextWith(
+					"mongo:solo",
 					string(static.MustReadFile("mongo-solo.tml", true)),
 					template.FuncMap{
 						"map":     ast.MapOutFields,
