@@ -1,5 +1,5 @@
-// Package {{PKGNAME}} is an auto-generated package which exposes the specific  
-// functionalities needed as desired to the specific reason which this package 
+// Package {{PKGNAME}} is an auto-generated package which exposes the specific
+// functionalities needed as desired to the specific reason which this package
 // exists for. Feel free to change this description.
 
 //go:generate go run generate.go
@@ -12,17 +12,15 @@ import (
 
 var internalFiles = map[string]string{}
 
-
-// Must retrieves the giving file and the content of that giving file else 
+// Must retrieves the giving file and the content of that giving file else
 // panics if not found.
 func Must(file string) string {
 	if content, ok := Get(file); ok {
 		return content
 	}
-	
+
 	panic(fmt.Sprintf("File %s not found", file))
 }
-
 
 // Get retrieves the giving file and the content of that giving file.
 func Get(file string) (string, bool) {
@@ -30,7 +28,7 @@ func Get(file string) (string, bool) {
 	return item, ok
 }
 
-func init(){
+func init() {
 	internalFiles["name.tml"] = "{{.Name}}"
 	internalFiles["import.tml"] = "import ({{ range .Imports}}\n    {{.}}\n{{end}})\n\n"
 	internalFiles["json.tml"] = "{\n{{ $len := subtract (len .Documents) 1 }}\n{{ range $ind, $item := .Documents }}\n    {{ if lessThan $ind $len}}{{$item}},{{else}}{{$item}}{{end}}\n{{ end }}\n}"

@@ -64,6 +64,10 @@ type WritersTo []io.WriterTo
 
 // WriteTo writes to the provided writer the variable declaration.
 func (d WritersTo) WriteTo(w io.Writer) (int64, error) {
+	if len(d) == 0 {
+		return 0, nil
+	}
+
 	wc := NewWriteCounter(w)
 
 	for _, item := range d {
@@ -1983,6 +1987,10 @@ type ImportDeclr struct {
 
 // WriteTo writes to the provided writer the structure declaration.
 func (im ImportDeclr) WriteTo(w io.Writer) (int64, error) {
+	if len(im.Packages) == 0 {
+		return 0, nil
+	}
+
 	w = NewNoBOM(w)
 
 	tml, err := ToTemplate("importDeclr", templates.Must("import.tml"), nil)

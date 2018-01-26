@@ -46,10 +46,12 @@ var (
 		"fieldByName":       FieldByFieldName,
 		"mapJSON":           MapOutFieldsToJSON,
 		"mapRandomJSON":     MapOutFieldsWithRandomValuesToJSON,
+		"mapFieldTypeJSON":  MapOutFieldsWithTypeToJSON,
 		"mapTypeJSON":       MapOutTypeToJSON,
 		"mapRandomTypeJSON": MapOutTypeToJSONWriterWithRandomValues,
 		"stringValueFor":    ToValueString,
 		"randomValue":       RandomFieldAssign,
+		"defaultGoType":     DefaultGoTypeString,
 		"defaultValue":      AssignDefaultValue,
 		"randomFieldValue":  RandomFieldValue,
 		"defaultType":       DefaultTypeValueString,
@@ -93,7 +95,7 @@ func (pkgs Packages) TestPackageForFile(path string, targetFile string) (Package
 		return PackageDeclaration{}, Package{}, ok
 	}
 
-	plDeclr, ok := pl.DeclarationFor(path, targetFile)
+	plDeclr, ok := pl.DeclarationFor(targetFile)
 	return plDeclr, pl, ok
 }
 
@@ -104,7 +106,7 @@ func (pkgs Packages) PackageForFile(path string, targetFile string) (PackageDecl
 		return PackageDeclaration{}, Package{}, ok
 	}
 
-	plDeclr, ok := pl.DeclarationFor(path, targetFile)
+	plDeclr, ok := pl.DeclarationFor(targetFile)
 	return plDeclr, pl, ok
 }
 
@@ -237,7 +239,6 @@ func (pkg Package) ImportFor(imp string) (ImportDeclaration, error) {
 // FunctionsFor returns a slice of FuncDeclaration for the giving object.
 func (pkg Package) FunctionsFor(obj *ast.Object) []FuncDeclaration {
 	var funcs []FuncDeclaration
-
 	for _, elem := range pkg.Packages {
 		funcs = append(funcs, elem.FunctionsFor(obj)...)
 	}
@@ -245,49 +246,10 @@ func (pkg Package) FunctionsFor(obj *ast.Object) []FuncDeclaration {
 	return funcs
 }
 
-// TestDeclarations returns the associated test declaration for the giving import path.
-func (pkg Package) TestDeclarations(importPath string) []PackageDeclaration {
-	var declrs []PackageDeclaration
-
-	for _, declr := range pkg.TestPackages {
-		if declr.Path == importPath {
-			declrs = append(declrs, declr)
-		}
-	}
-
-	return declrs
-}
-
-// Declarations returns the associated declaration for the giving import path.
-func (pkg Package) Declarations(importPath string) []PackageDeclaration {
-	var declrs []PackageDeclaration
-
-	for _, declr := range pkg.Packages {
-		if declr.Path == importPath {
-			declrs = append(declrs, declr)
-		}
-	}
-
-	return declrs
-}
-
-// TestDeclarationFor returns the associated test declaration for the giving file path.
-func (pkg Package) TestDeclarationFor(importPath string, targetFile string) (PackageDeclaration, bool) {
-	declrs := pkg.TestDeclarations(importPath)
-	for _, declr := range declrs {
-		if declr.File == targetFile {
-			return declr, true
-		}
-	}
-
-	return PackageDeclaration{}, false
-}
-
 // DeclarationFor returns the associated declaration for the giving file path.
-func (pkg Package) DeclarationFor(importPath string, targetFile string) (PackageDeclaration, bool) {
-	declrs := pkg.Declarations(importPath)
-	for _, declr := range declrs {
-		if declr.File == targetFile {
+func (pkg Package) DeclarationFor(targetFile string) (PackageDeclaration, bool) {
+	for _, declr := range pkg.Packages {
+		if declr.FilePath == targetFile || declr.File == targetFile {
 			return declr, true
 		}
 	}
@@ -296,8 +258,8 @@ func (pkg Package) DeclarationFor(importPath string, targetFile string) (Package
 }
 
 // TypeFor returns associated TypeDeclaration for importPath in file with the typeName.
-func (pkg Package) TypeFor(importPath string, typeName string) (TypeDeclaration, bool) {
-	for _, declr := range pkg.Declarations(importPath) {
+func (pkg Package) TypeFor(typeName string) (TypeDeclaration, bool) {
+	for _, declr := range pkg.Packages {
 		for _, elem := range declr.Types {
 			if elem.Object.Name.Name == typeName {
 				return elem, true
@@ -309,8 +271,8 @@ func (pkg Package) TypeFor(importPath string, typeName string) (TypeDeclaration,
 }
 
 // FunctionFor returns associated FuncDeclaration for importPath in file with the typeName.
-func (pkg Package) FunctionFor(importPath string, typeName string) (FuncDeclaration, bool) {
-	for _, declr := range pkg.Declarations(importPath) {
+func (pkg Package) FunctionFor(typeName string) (FuncDeclaration, bool) {
+	for _, declr := range pkg.Packages {
 		for _, elem := range declr.Functions {
 			if elem.FuncDeclr.Name.Name == typeName {
 				return elem, true
@@ -322,8 +284,8 @@ func (pkg Package) FunctionFor(importPath string, typeName string) (FuncDeclarat
 }
 
 // StructFor returns associated StructDeclaration for importPath in file with the typeName.
-func (pkg Package) StructFor(importPath string, typeName string) (StructDeclaration, bool) {
-	for _, declr := range pkg.Declarations(importPath) {
+func (pkg Package) StructFor(typeName string) (StructDeclaration, bool) {
+	for _, declr := range pkg.Packages {
 		for _, elem := range declr.Structs {
 			if elem.Object.Name.Name == typeName {
 				return elem, true
@@ -335,8 +297,8 @@ func (pkg Package) StructFor(importPath string, typeName string) (StructDeclarat
 }
 
 // InterfaceFor returns associated InterfaceDeclaration for importPath in file with the typeName.
-func (pkg Package) InterfaceFor(importPath string, typeName string) (InterfaceDeclaration, bool) {
-	for _, declr := range pkg.Declarations(importPath) {
+func (pkg Package) InterfaceFor(typeName string) (InterfaceDeclaration, bool) {
+	for _, declr := range pkg.Packages {
 		for _, elem := range declr.Interfaces {
 			if elem.Object.Name.Name == typeName {
 				return elem, true
@@ -345,46 +307,6 @@ func (pkg Package) InterfaceFor(importPath string, typeName string) (InterfaceDe
 	}
 
 	return InterfaceDeclaration{}, false
-}
-
-// TypeForFile returns associated TypeDeclaration for importPath in file with the typeName.
-func (pkg Package) TypeForFile(importPath string, targetFile string, typeName string) (TypeDeclaration, bool) {
-	declr, ok := pkg.DeclarationFor(importPath, targetFile)
-	if !ok {
-		return TypeDeclaration{}, false
-	}
-
-	return declr.TypeFor(typeName)
-}
-
-// FunctionForFile returns associated FuncDeclaration for importPath in file with the typeName.
-func (pkg Package) FunctionForFile(importPath string, targetFile string, typeName string) (FuncDeclaration, bool) {
-	declr, ok := pkg.DeclarationFor(importPath, targetFile)
-	if !ok {
-		return FuncDeclaration{}, false
-	}
-
-	return declr.FunctionFor(typeName)
-}
-
-// StructForFile returns associated StructDeclaration for importPath in file with the typeName.
-func (pkg Package) StructForFile(importPath string, targetFile string, typeName string) (StructDeclaration, bool) {
-	declr, ok := pkg.DeclarationFor(importPath, targetFile)
-	if !ok {
-		return StructDeclaration{}, false
-	}
-
-	return declr.StructFor(typeName)
-}
-
-// InterfaceForFile returns associated InterfaceDeclaration for importPath in file with the typeName.
-func (pkg Package) InterfaceForFile(importPath string, targetFile string, typeName string) (InterfaceDeclaration, bool) {
-	declr, ok := pkg.DeclarationFor(importPath, targetFile)
-	if !ok {
-		return InterfaceDeclaration{}, false
-	}
-
-	return declr.InterfaceFor(typeName)
 }
 
 //===========================================================================================================
@@ -400,6 +322,7 @@ type PackageDeclaration struct {
 	Source           string
 	Comments         []string
 	Imports          map[string]ImportDeclaration
+	ImportedPackages map[string]Package
 	Annotations      []AnnotationDeclaration
 	Types            []TypeDeclaration
 	Structs          []StructDeclaration
@@ -407,7 +330,6 @@ type PackageDeclaration struct {
 	Functions        []FuncDeclaration
 	Variables        []VariableDeclaration
 	ObjectFunc       map[*ast.Object][]FuncDeclaration
-	ImportedPackages map[string]Packages
 	importedloaded   bool
 }
 
@@ -420,6 +342,29 @@ func (pkg PackageDeclaration) HasFunctionFor(str StructDeclaration, funcName str
 	}
 
 	return true
+}
+
+// ImportedPackageFor returns the Package for a giving imported package based on the package name
+// or aliased used in the package for this declaration.
+func (pkg PackageDeclaration) ImportedPackageFor(packageName string) (Package, bool) {
+	pkgPath, ok := pkg.Imports[packageName]
+	if !ok {
+		var found bool
+		for _, imp := range pkg.Imports {
+			if imp.Name == packageName {
+				found = true
+				pkgPath = imp
+				break
+			}
+		}
+
+		if !found {
+			return Package{}, false
+		}
+	}
+
+	pkgItem, ok := pkg.ImportedPackages[pkgPath.Path]
+	return pkgItem, ok
 }
 
 // HasAnnotation returns true/false if giving PackageDeclaration has annotation at package level.
@@ -492,7 +437,7 @@ func (pkg PackageDeclaration) ImportFor(imp string) (ImportDeclaration, error) {
 	return impDeclr, nil
 }
 
-// FunctionFor returns associated FuncDeclaration associated with name.
+// FunctionFor returns associated FuncDeclaration with giving name.
 func (pkg PackageDeclaration) FunctionFor(typeName string) (FuncDeclaration, bool) {
 	for _, typed := range pkg.Functions {
 		if typed.FuncDeclr.Name.Name == typeName {
@@ -545,43 +490,69 @@ func (pkg PackageDeclaration) FunctionsFor(obj *ast.Object) []FuncDeclaration {
 	return pkg.FunctionsForName(obj.Name)
 }
 
+// MethodFor returns associated FuncDeclaration with has struct declaration has receiver.
+func (pkg PackageDeclaration) MethodFor(structName string) ([]FuncDeclaration, bool) {
+	for obj, set := range pkg.ObjectFunc {
+		if obj.Name != structName {
+			continue
+		}
+		return set, true
+	}
+
+	return nil, false
+}
+
 //===========================================================================================================
 
 // VariableDeclaration defines a type which holds annotation data for a giving variable declaration.
 type VariableDeclaration struct {
-	From         int
-	Length       int
-	Package      string
-	Path         string
-	FilePath     string
-	Source       string
-	Comments     string
-	File         string
-	Position     token.Pos
-	Object       *ast.ValueSpec
-	GenObj       *ast.GenDecl
-	Declr        *PackageDeclaration
-	Annotations  []AnnotationDeclaration
-	Associations map[string]AnnotationAssociationDeclaration
+	From            int
+	Length          int
+	Package         string
+	Path            string
+	Name            string
+	NameWithPackage string
+	NameIdent       *ast.Ident
+	FilePath        string
+	Source          string
+	Comments        string
+	File            string
+	Position        token.Pos
+	Object          *ast.ValueSpec
+	GenObj          *ast.GenDecl
+	Declr           *PackageDeclaration
+	Annotations     []AnnotationDeclaration
+	Associations    map[string]AnnotationAssociationDeclaration
 }
 
 // StructDeclaration defines a type which holds annotation data for a giving struct type declaration.
 type StructDeclaration struct {
-	From         int
-	Length       int
-	Package      string
-	Path         string
-	FilePath     string
-	Source       string
-	Comments     string
-	File         string
-	Struct       *ast.StructType
-	Object       *ast.TypeSpec
-	GenObj       *ast.GenDecl
-	Position     token.Pos
-	Declr        *PackageDeclaration
-	Annotations  []AnnotationDeclaration
-	Associations map[string]AnnotationAssociationDeclaration
+	From            int
+	Length          int
+	Package         string
+	Name            string
+	NameWithPackage string
+	Path            string
+	FilePath        string
+	Source          string
+	Comments        string
+	File            string
+	Struct          *ast.StructType
+	Object          *ast.TypeSpec
+	GenObj          *ast.GenDecl
+	Position        token.Pos
+	Declr           *PackageDeclaration
+	Annotations     []AnnotationDeclaration
+	Associations    map[string]AnnotationAssociationDeclaration
+}
+
+// Fields returns a slice containing all fields of giving struct.
+// If struct has no associated PackageDeclaration, error is returned.
+func (str StructDeclaration) Fields() ([]FieldDeclaration, error) {
+	if str.Declr == nil {
+		return nil, errors.New("not possible")
+	}
+	return GetFields(str, str.Declr), nil
 }
 
 // AnnotationsFor returns all annotations with the giving name.
@@ -606,6 +577,8 @@ type TypeDeclaration struct {
 	From            int
 	Length          int
 	Package         string
+	Name            string
+	NameWithPackage string
 	Path            string
 	FilePath        string
 	Source          string
@@ -646,30 +619,31 @@ func (ty TypeDeclaration) AnnotationsFor(typeName string) []AnnotationDeclaratio
 // FuncDeclaration defines a type used to annotate a giving type declaration
 // associated with a ast for a function.
 type FuncDeclaration struct {
-	From            int
-	Length          int
-	Package         string
-	Path            string
-	FilePath        string
-	Exported        bool
-	File            string
-	FuncName        string
-	RecieverName    string
-	Source          string
-	Comments        string
-	Position        token.Pos
-	TypeDeclr       ast.Decl
-	FuncDeclr       *ast.FuncDecl
-	Type            *ast.FuncType
-	Reciever        *ast.Object
-	RecieverIdent   *ast.Ident
-	RecieverPointer *ast.StarExpr
-	FuncType        *ast.FieldList
-	Returns         *ast.FieldList
-	Arguments       *ast.FieldList
-	Declr           *PackageDeclaration
-	Annotations     []AnnotationDeclaration
-	Associations    map[string]AnnotationAssociationDeclaration
+	From                int
+	Length              int
+	Package             string
+	Path                string
+	FilePath            string
+	Exported            bool
+	File                string
+	FuncName            string
+	FuncNameWithPackage string
+	RecieverName        string
+	Source              string
+	Comments            string
+	Position            token.Pos
+	TypeDeclr           ast.Decl
+	FuncDeclr           *ast.FuncDecl
+	Type                *ast.FuncType
+	Reciever            *ast.Object
+	RecieverIdent       *ast.Ident
+	RecieverPointer     *ast.StarExpr
+	FuncType            *ast.FieldList
+	Returns             *ast.FieldList
+	Arguments           *ast.FieldList
+	Declr               *PackageDeclaration
+	Annotations         []AnnotationDeclaration
+	Associations        map[string]AnnotationAssociationDeclaration
 }
 
 // AnnotationsFor returns all annotations with the giving name.
@@ -750,26 +724,82 @@ type AnnotationAssociationDeclaration struct {
 
 // InterfaceDeclaration defines a type which holds annotation data for a giving interface type declaration.
 type InterfaceDeclaration struct {
-	From         int
-	Length       int
-	Package      string
-	Path         string
-	Source       string
-	Comments     string
-	FilePath     string
-	File         string
-	Interface    *ast.InterfaceType
-	Object       *ast.TypeSpec
-	GenObj       *ast.GenDecl
-	Position     token.Pos
-	Declr        *PackageDeclaration
-	Annotations  []AnnotationDeclaration
-	Associations map[string]AnnotationAssociationDeclaration
+	From            int
+	Length          int
+	Package         string
+	Path            string
+	Name            string
+	NameWithPackage string
+	Source          string
+	Comments        string
+	FilePath        string
+	File            string
+	Interface       *ast.InterfaceType
+	Object          *ast.TypeSpec
+	GenObj          *ast.GenDecl
+	Position        token.Pos
+	Declr           *PackageDeclaration
+	methods         []FunctionDefinition
+	Annotations     []AnnotationDeclaration
+	Associations    map[string]AnnotationAssociationDeclaration
 }
 
-// Methods returns the associated methods for the giving interface.
-func (i InterfaceDeclaration) Methods(pkg *PackageDeclaration) []FunctionDefinition {
-	return GetInterfaceFunctions(i.Interface, pkg)
+// GetImports returns a map containing all import paths related to
+// types used for the methods of giving interface.
+func (i *InterfaceDeclaration) GetImports(pkg *PackageDeclaration, internal bool) map[string]string {
+	imports := make(map[string]string, 0)
+
+	methods := i.Methods(pkg)
+	for _, method := range methods {
+		// Retrieve all import paths for arguments.
+		func(args []ArgType) {
+			for _, argument := range args {
+				if argument.Import2.InternalPkg && !internal {
+					continue
+				}
+
+				if argument.Import2.Path != "" {
+					if argument.Import2.InternalPkg && !internal {
+						continue
+					}
+					imports[argument.Import2.Path] = argument.Import2.Name
+				}
+				if argument.Import.Path != "" {
+					if argument.Import.InternalPkg && !internal {
+						continue
+					}
+					imports[argument.Import.Path] = argument.Import.Name
+				}
+			}
+		}(method.Args)
+
+		// Retrieve all import paths for returns.
+		func(args []ArgType) {
+			for _, argument := range args {
+				if argument.Import2.Path != "" {
+					if argument.Import2.InternalPkg && !internal {
+						continue
+					}
+					imports[argument.Import2.Path] = argument.Import2.Name
+				}
+				if argument.Import.Path != "" {
+					if argument.Import.InternalPkg && !internal {
+						continue
+					}
+					imports[argument.Import.Path] = argument.Import.Name
+				}
+			}
+		}(method.Returns)
+	}
+	return imports
+}
+
+// GetMethods returns the associated methods for the giving interface.
+func (i *InterfaceDeclaration) Methods(pkg *PackageDeclaration) []FunctionDefinition {
+	if len(i.methods) == 0 {
+		i.methods = GetInterfaceFunctions(i.Interface, pkg)
+	}
+	return i.methods
 }
 
 // ArgType defines a type to represent the information for a giving functions argument or
@@ -809,6 +839,132 @@ type FunctionDefinition struct {
 	Struct    *ast.StructType
 }
 
+// TotalReturns returns length of  function return set.
+func (fd FunctionDefinition) TotalReturns() int {
+	return len(fd.Returns)
+}
+
+// TotalArgs returns length of  function arg set.
+func (fd FunctionDefinition) TotalArgs() int {
+	return len(fd.Args)
+}
+
+// HasReturns returns true/false if giving function has return types.
+func (fd FunctionDefinition) HasReturns() bool {
+	return len(fd.Returns) != 0
+}
+
+// HasArgs returns true/false if giving function has aarguments.
+func (fd FunctionDefinition) HasArgs() bool {
+	return len(fd.Args) != 0
+}
+
+// GetReturnsAt gets returns ArgType at index point.
+func (fd FunctionDefinition) GetReturnsAt(i int) ArgType {
+	if i >= len(fd.Returns) {
+		return ArgType{}
+	}
+	return fd.Returns[i]
+}
+
+// GetArgsAt gets argument ArgType at index point.
+func (fd FunctionDefinition) GetArgsAt(i int) ArgType {
+	if i >= len(fd.Args) {
+		return ArgType{}
+	}
+	return fd.Args[i]
+}
+
+// ReturnTypePos returns position of giving type if part of
+// the function's return types else returning -1.
+func (fd FunctionDefinition) ReturnTypePos(wanted string) int {
+	for index, arg := range fd.Returns {
+		if arg.ExType == wanted {
+			return index
+		}
+	}
+	return -1
+}
+
+// ArgTypePos returns position of giving type if part of
+// the function's argument types else returning -1.
+func (fd FunctionDefinition) ArgTypePos(wanted string) int {
+	for index, arg := range fd.Args {
+		if arg.ExType == wanted {
+			return index
+		}
+	}
+	return -1
+}
+
+// CountOfReturnType counts total number of giving type in the returns lists
+// of function.
+func (fd FunctionDefinition) CountOfReturnType(wanted string) int {
+	var count int
+	for _, arg := range fd.Returns {
+		if arg.ExType == wanted {
+			count++
+		}
+	}
+	return count
+}
+
+// CountOfArgType counts total number of giving type in the arguments lists
+// of function.
+func (fd FunctionDefinition) CountOfArgType(wanted string) int {
+	var count int
+	for _, arg := range fd.Args {
+		if arg.ExType == wanted {
+			count++
+		}
+	}
+	return count
+}
+
+// HasNoReturnType returns true/false if giving type is not part of
+// the function's return types.
+func (fd FunctionDefinition) HasNoReturnType(wanted string) bool {
+	for _, arg := range fd.Returns {
+		if arg.ExType == wanted {
+			return false
+		}
+	}
+	return true
+}
+
+// HasNoArgType returns true/false if giving type is part of
+// the function's arguments types.
+func (fd FunctionDefinition) HasNoArgType(wanted string) bool {
+	for _, arg := range fd.Args {
+		if arg.ExType == wanted {
+			return false
+		}
+	}
+	return true
+}
+
+// HasReturnType returns true/false if giving type is part of
+// the function's return types.
+func (fd FunctionDefinition) HasReturnType(wanted string) bool {
+	for _, arg := range fd.Returns {
+		if arg.ExType == wanted {
+			return true
+		}
+	}
+	return false
+}
+
+// HasArgType returns true/false if giving type is part of
+// the function's arguments types.
+func (fd FunctionDefinition) HasArgType(wanted string) bool {
+	for _, arg := range fd.Args {
+		if arg.ExType == wanted {
+			return true
+		}
+	}
+	return false
+}
+
 // ArgumentNamesList returns the assignment names for the function arguments.
 func (fd FunctionDefinition) ArgumentNamesList() string {
 	var args []string
@@ -829,6 +985,44 @@ func (fd FunctionDefinition) ReturnNamesList() string {
 	}
 
 	return strings.Join(rets, ",")
+}
+
+// ExReturnList returns a string version of the returns of the giving function, removing any type
+// with provided package name  `packageName.` as a prefix.
+func (fd FunctionDefinition) ExReturnList(asFromOutside bool, pkgName string) string {
+	var rets []string
+
+	for _, ret := range fd.Returns {
+		if asFromOutside {
+			exType := strings.TrimPrefix(strings.TrimPrefix(ret.ExType, pkgName), ".")
+			rets = append(rets, fmt.Sprintf("%s", exType))
+			continue
+		}
+
+		exType := strings.TrimPrefix(strings.TrimPrefix(ret.Type, pkgName), ".")
+		rets = append(rets, fmt.Sprintf("%s", exType))
+	}
+
+	return strings.Join(rets, ",")
+}
+
+// ExArgumentList returns a string version of the arguments of the giving function, removing any type
+// with provided package name  `packageName.` as a prefix.
+func (fd FunctionDefinition) ExArgumentList(asFromOutside bool, pkgName string) string {
+	var args []string
+
+	for _, arg := range fd.Args {
+		if asFromOutside {
+			exType := strings.TrimPrefix(strings.TrimPrefix(arg.ExType, pkgName), ".")
+			args = append(args, fmt.Sprintf("%s %s", arg.Name, exType))
+			continue
+		}
+
+		exType := strings.TrimPrefix(strings.TrimPrefix(arg.Type, pkgName), ".")
+		args = append(args, fmt.Sprintf("%s %s", arg.Name, exType))
+	}
+
+	return strings.Join(args, ",")
 }
 
 // ReturnList returns a string version of the return of the giving function.
@@ -895,6 +1089,16 @@ func (flds Fields) Embedded() Fields {
 	}
 
 	return fields
+}
+
+// ByName returns giving field with name.
+func (flds Fields) ByName(name string) (FieldDeclaration, bool) {
+	for _, fl := range flds {
+		if fl.FieldName == name {
+			return fl, true
+		}
+	}
+	return FieldDeclaration{}, false
 }
 
 // TagFor defines a function that returns all appropriate TagDeclaration
@@ -1168,21 +1372,19 @@ func GetArgTypeFromField(retCounter int, varPrefix string, targetFile string, re
 		arg.SelectObject = iobj.Sel
 
 		if !importDclr.InternalPkg {
-			if importedParentPackage, ok := pkg.ImportedPackages[importDclr.Path]; ok {
-				if mdeclr, ok := importedParentPackage.PackageFor(importDclr.Path); ok {
-					if mtype, ok := mdeclr.TypeFor(importDclr.Path, iobj.Sel.Name); ok {
-						arg.Spec = mtype.Object
-					}
+			if mdeclr, ok := pkg.ImportedPackages[importDclr.Path]; ok {
+				if mtype, ok := mdeclr.TypeFor(iobj.Sel.Name); ok {
+					arg.Spec = mtype.Object
+				}
 
-					if stype, ok := mdeclr.StructFor(importDclr.Path, iobj.Sel.Name); ok {
-						arg.Spec = stype.Object
-						arg.StructObject = stype.Struct
-					}
+				if stype, ok := mdeclr.StructFor(iobj.Sel.Name); ok {
+					arg.Spec = stype.Object
+					arg.StructObject = stype.Struct
+				}
 
-					if itype, ok := mdeclr.InterfaceFor(importDclr.Path, iobj.Sel.Name); ok {
-						arg.Spec = itype.Object
-						arg.InterfaceObject = itype.Interface
-					}
+				if itype, ok := mdeclr.InterfaceFor(iobj.Sel.Name); ok {
+					arg.Spec = itype.Object
+					arg.InterfaceObject = itype.Interface
 				}
 			}
 		}
@@ -1228,21 +1430,19 @@ func GetArgTypeFromField(retCounter int, varPrefix string, targetFile string, re
 			arg.SelectObject = value.Sel
 
 			if !importDclr.InternalPkg {
-				if importedParentPackage, ok := pkg.ImportedPackages[importDclr.Path]; ok {
-					if mdeclr, ok := importedParentPackage.PackageFor(importDclr.Path); ok {
-						if mtype, ok := mdeclr.TypeFor(importDclr.Path, value.Sel.Name); ok {
-							arg.Spec = mtype.Object
-						}
+				if mdeclr, ok := pkg.ImportedPackages[importDclr.Path]; ok {
+					if mtype, ok := mdeclr.TypeFor(value.Sel.Name); ok {
+						arg.Spec = mtype.Object
+					}
 
-						if stype, ok := mdeclr.StructFor(importDclr.Path, value.Sel.Name); ok {
-							arg.Spec = stype.Object
-							arg.StructObject = stype.Struct
-						}
+					if stype, ok := mdeclr.StructFor(value.Sel.Name); ok {
+						arg.Spec = stype.Object
+						arg.StructObject = stype.Struct
+					}
 
-						if itype, ok := mdeclr.InterfaceFor(importDclr.Path, value.Sel.Name); ok {
-							arg.Spec = itype.Object
-							arg.InterfaceObject = itype.Interface
-						}
+					if itype, ok := mdeclr.InterfaceFor(value.Sel.Name); ok {
+						arg.Spec = itype.Object
+						arg.InterfaceObject = itype.Interface
 					}
 				}
 
@@ -1351,21 +1551,19 @@ func GetArgTypeFromField(retCounter int, varPrefix string, targetFile string, re
 			arg.SelectObject = value.Sel
 
 			if !importDclr.InternalPkg {
-				if importedParentPackage, ok := pkg.ImportedPackages[importDclr.Path]; ok {
-					if mdeclr, ok := importedParentPackage.PackageFor(importDclr.Path); ok {
-						if mtype, ok := mdeclr.TypeFor(importDclr.Path, value.Sel.Name); ok {
-							arg.Spec = mtype.Object
-						}
+				if mdeclr, ok := pkg.ImportedPackages[importDclr.Path]; ok {
+					if mtype, ok := mdeclr.TypeFor(value.Sel.Name); ok {
+						arg.Spec = mtype.Object
+					}
 
-						if stype, ok := mdeclr.StructFor(importDclr.Path, value.Sel.Name); ok {
-							arg.Spec = stype.Object
-							arg.StructObject = stype.Struct
-						}
+					if stype, ok := mdeclr.StructFor(value.Sel.Name); ok {
+						arg.Spec = stype.Object
+						arg.StructObject = stype.Struct
+					}
 
-						if itype, ok := mdeclr.InterfaceFor(importDclr.Path, value.Sel.Name); ok {
-							arg.Spec = itype.Object
-							arg.InterfaceObject = itype.Interface
-						}
+					if itype, ok := mdeclr.InterfaceFor(value.Sel.Name); ok {
+						arg.Spec = itype.Object
+						arg.InterfaceObject = itype.Interface
 					}
 				}
 			}
@@ -1825,7 +2023,6 @@ func MapOutFields(item StructDeclaration, rootName, tagName, fallback string) (s
 // FieldByFieldName defines a function to return actual name of field with the given tag name.
 func FieldByFieldName(item StructDeclaration, fieldName string) (FieldDeclaration, error) {
 	if item.Declr == nil {
-		fmt.Printf("Receiving StructDeclaration without PackageDeclaration: %#v\n", item)
 		return FieldDeclaration{}, errors.New("StructDeclaration has no PackageDeclaration field")
 	}
 	fields := Fields(GetFields(item, item.Declr))
@@ -1844,7 +2041,6 @@ func FieldByFieldName(item StructDeclaration, fieldName string) (FieldDeclaratio
 // FieldFor defines a function to return actual name of field with the given tag name.
 func FieldFor(item StructDeclaration, tag string, tagFieldName string) (FieldDeclaration, error) {
 	if item.Declr == nil {
-		fmt.Printf("Receiving StructDeclaration without PackageDeclaration: %#v\n", item)
 		return FieldDeclaration{}, errors.New("StructDeclaration has no PackageDeclaration field")
 	}
 
@@ -1866,10 +2062,6 @@ func FieldFor(item StructDeclaration, tag string, tagFieldName string) (FieldDec
 
 // FieldNameFor defines a function to return actual name of field with the given tag name.
 func FieldNameFor(item StructDeclaration, tag string, tagFieldName string) string {
-	if item.Declr == nil {
-		fmt.Printf("Receiving StructDeclaration without PackageDeclaration: %#v\n", item)
-		return ""
-	}
 	fields := Fields(GetFields(item, item.Declr))
 
 	wTags := fields.TagFor(tag)
@@ -1899,10 +2091,6 @@ func AssignDefaultValue(item StructDeclaration, tag string, tagVal string, varNa
 
 // DefaultFieldValueFor defines a function to return a field default value.
 func DefaultFieldValueFor(item StructDeclaration, tag string, tagVal string) (string, string, error) {
-	if item.Declr == nil {
-		fmt.Printf("Receiving StructDeclaration without PackageDeclaration: %#v\n", item)
-		return "", "", errors.New("StructDeclaration has no PackageDeclaration field")
-	}
 	fields := Fields(GetFields(item, item.Declr))
 
 	wTags := fields.TagFor(tag)
@@ -1934,7 +2122,6 @@ func RandomFieldAssign(item StructDeclaration, varName string, tag string, excep
 // included in the exceptions set.
 func RandomFieldWithExcept(item StructDeclaration, tag string, exceptions ...string) (string, string, error) {
 	if item.Declr == nil {
-		fmt.Printf("Receiving StructDeclaration without PackageDeclaration: %#v\n", item)
 		return "", "", errors.New("StructDeclaration has no PackageDeclaration field")
 	}
 
@@ -1960,14 +2147,95 @@ func RandomFieldWithExcept(item StructDeclaration, tag string, exceptions ...str
 	return "", "", errors.New("All tags match exceptions")
 }
 
+// MapOutFieldsWithTypeToJSON runs MapOutFieldsWithTypeToMap and returns returned map as JSON.
+func MapOutFieldsWithTypeToJSON(item StructDeclaration, rootName, tagName, fallback string) (string, error) {
+	mapped, err := MapOutFieldsWithTypeToMap(item, rootName, tagName, fallback)
+	if err != nil {
+		return "", err
+	}
+
+	mappedJSON, err := json.Marshal(mapped)
+	if err != nil {
+		return "", err
+	}
+
+	return string(mappedJSON), nil
+}
+
+// MapOutFieldsWithTypeToMap defines a function to return a map of field name that has it's type as value
+// pair for the giving struct.
+func MapOutFieldsWithTypeToMap(item StructDeclaration, rootName, tagName, fallback string) (map[string]interface{}, error) {
+	fields := Fields(GetFields(item, item.Declr))
+
+	wTags := fields.TagFor(tagName)
+	if len(wTags) == 0 {
+		wTags = fields.TagFor(fallback)
+
+		if len(wTags) == 0 {
+			return nil, fmt.Errorf("No tags match for %q and %q fallback for struct %q", tagName, fallback, item.Object.Name)
+		}
+	}
+
+	dm := make(map[string]interface{})
+
+	embedded := fields.Embedded()
+
+	for _, embed := range embedded {
+		emt, ems, err := GetStructSpec(embed.Type.Decl)
+		if err != nil {
+			return nil, err
+		}
+
+		vals, err := MapOutFieldsWithTypeToMap(StructDeclaration{
+			Object: emt,
+			Struct: ems,
+			Declr:  item.Declr,
+		}, fmt.Sprintf("%s.%s", rootName, embed.FieldName), tagName, fallback)
+
+		if err != nil {
+			return nil, err
+		}
+
+		for name, val := range vals {
+			dm[name] = val
+		}
+	}
+
+	// Collect key field names from embedded first
+	for _, tag := range wTags {
+		if tag.Value == "-" {
+			continue
+		}
+
+		if tag.Field.Type != nil {
+			embededType, embedStruct, err := GetStructSpec(tag.Field.Type.Decl)
+			if err != nil {
+				return nil, err
+			}
+
+			flds, err := MapOutFieldsWithTypeToMap(StructDeclaration{
+				Object: embededType,
+				Struct: embedStruct,
+				Declr:  item.Declr,
+			}, fmt.Sprintf("%s.%s", rootName, tag.Field.FieldName), tagName, fallback)
+
+			if err != nil {
+				return nil, err
+			}
+
+			dm[tag.Value] = flds
+			continue
+		}
+
+		dm[tag.Value] = tag.Field.FieldTypeName
+	}
+
+	return dm, nil
+}
+
 // MapOutFieldsToMap defines a function to return a map of field name and value
 // pair for the giving struct.
 func MapOutFieldsToMap(item StructDeclaration, rootName, tagName, fallback string) (map[string]io.WriterTo, error) {
-	if item.Declr == nil {
-		fmt.Printf("Receiving StructDeclaration without PackageDeclaration: %#v\n", item)
-		return nil, errors.New("StructDeclaration has no PackageDeclaration field")
-	}
-
 	fields := Fields(GetFields(item, item.Declr))
 
 	wTags := fields.TagFor(tagName)
@@ -2057,7 +2325,6 @@ func MapOutFieldsToJSON(item StructDeclaration, tagName, fallback string) (strin
 // output.
 func MapOutTypeToJSON(item TypeDeclaration) (io.WriterTo, error) {
 	if item.Declr == nil {
-		fmt.Printf("Receiving TypeDeclaration without PackageDeclaration: %#v\n", item)
 		return bytes.NewBuffer(nil), errors.New("TypeDeclaration has no PackageDeclaration field")
 	}
 
@@ -2099,7 +2366,6 @@ func MapOutFieldsWithRandomValuesToJSON(item StructDeclaration, tagName, fallbac
 // output.
 func MapOutFieldsToJSONWriter(item StructDeclaration, tagName, fallback string) (io.WriterTo, error) {
 	if item.Declr == nil {
-		fmt.Printf("Receiving StructDeclaration without PackageDeclaration: %#v\n", item)
 		return bytes.NewBuffer(nil), errors.New("StructDeclaration has no PackageDeclaration field")
 	}
 
@@ -2153,7 +2419,6 @@ func MapOutFieldsToJSONWriter(item StructDeclaration, tagName, fallback string) 
 // output.
 func MapOutTypeToJSONWriterWithRandomValues(item TypeDeclaration) (io.WriterTo, error) {
 	if item.Declr == nil {
-		fmt.Printf("Receiving TypeDeclaration without PackageDeclaration: %#v\n", item)
 		return bytes.NewBuffer(nil), errors.New("TypeDeclaration has no PackageDeclaration field")
 	}
 
@@ -2178,7 +2443,6 @@ func MapOutTypeToJSONWriterWithRandomValues(item TypeDeclaration) (io.WriterTo, 
 // output.
 func MapOutFieldsToJSONWriterWithRandomValues(item StructDeclaration, tagName, fallback string) (io.WriterTo, error) {
 	if item.Declr == nil {
-		fmt.Printf("Receiving StructDeclaration without PackageDeclaration: %#v\n", item)
 		return bytes.NewBuffer(nil), errors.New("StructDeclaration has no PackageDeclaration field")
 	}
 
@@ -2246,11 +2510,6 @@ func MapOutValues(item StructDeclaration, onlyExported bool) (string, error) {
 // MapOutFieldsValues defines a function to return a map of field name and associated
 // placeholders as value.
 func MapOutFieldsValues(item StructDeclaration, onlyExported bool, name *gen.NameDeclr) io.WriterTo {
-	if item.Declr == nil {
-		fmt.Printf("Receiving StructDeclaration without PackageDeclaration: %#v\n", item)
-		return bytes.NewBuffer(nil)
-	}
-
 	fields := Fields(GetFields(item, item.Declr))
 
 	var writers []io.WriterTo
@@ -2585,4 +2844,43 @@ func GetTag(f FieldDeclaration, tagName string, fallback string) (TagDeclaration
 	}
 
 	return tg, nil
+}
+
+// DefaultGoTypeString returns the default value string of a giving
+// typeName.
+func DefaultGoTypeString(typeName string) string {
+	if strings.HasPrefix(typeName, "*") {
+		return "nil"
+	}
+
+	if strings.HasPrefix(typeName, "[]") {
+		return "nil"
+	}
+
+	if strings.HasPrefix(typeName, "map[") {
+		return "nil"
+	}
+
+	switch typeName {
+	case "uint", "uint32", "uint64":
+		return "0"
+	case "bool":
+		return `false`
+	case "string":
+		return `""`
+	case "rune":
+		return `rune(0)`
+	case "byte":
+		return `byte(rune(0))`
+	case "float32", "float64":
+		return "0.0"
+	case "int", "int32", "int64":
+		return "0"
+	case "map[string]interface{}":
+		return "map[string]interface{}"
+	case "map[string]string":
+		return "map[string]string{}"
+	}
+
+	return fmt.Sprintf("%s{}", typeName)
 }

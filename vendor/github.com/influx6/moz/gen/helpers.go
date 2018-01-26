@@ -382,17 +382,7 @@ func Source(tml *template.Template, binding interface{}) SourceDeclr {
 }
 
 // SourceTextWith returns a new instance of a TextDeclr.
-func SourceTextWith(tml string, funcs template.FuncMap, binding interface{}) TextDeclr {
-	return TextDeclr{
-		Name:     "source:template",
-		Funcs:    funcs,
-		Template: tml,
-		Binding:  binding,
-	}
-}
-
-// SourceTextWithName returns a new instance of a TextDeclr.
-func SourceTextWithName(name string, tml string, funcs template.FuncMap, binding interface{}) TextDeclr {
+func SourceTextWith(name string, tml string, funcs template.FuncMap, binding interface{}) TextDeclr {
 	return TextDeclr{
 		Name:     name,
 		Funcs:    funcs,
@@ -402,8 +392,9 @@ func SourceTextWithName(name string, tml string, funcs template.FuncMap, binding
 }
 
 // SourceText returns a new instance of a TextDeclr.
-func SourceText(tml string, binding interface{}) TextDeclr {
+func SourceText(name string, tml string, binding interface{}) TextDeclr {
 	return TextDeclr{
+		Name:     name,
 		Template: tml,
 		Binding:  binding,
 	}
@@ -453,8 +444,8 @@ func Suffix(suffix, val io.WriterTo) SuffixDeclr {
 	}
 }
 
-// MultiCommentary returns a new instance of a MultiCommentDeclr.
-func MultiCommentary(mainblock io.WriterTo, elems ...io.WriterTo) MultiCommentDeclr {
+// MultiComments returns a new instance of a MultiCommentDeclr.
+func MultiComments(mainblock io.WriterTo, elems ...io.WriterTo) MultiCommentDeclr {
 	return MultiCommentDeclr{
 		MainBlock: mainblock,
 		Blocks:    WritersTo(elems),

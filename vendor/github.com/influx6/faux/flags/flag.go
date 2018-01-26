@@ -21,14 +21,13 @@ const (
 	usageTml = `Usage: {{ toLower .Title}} [flags] [command] 
 
 ⡿ COMMANDS:{{ range .Commands }}
-	⠙ {{toLower .Name }}	{{if isEmpty .ShortDesc }}{{cutoff .Desc 40 }}{{else}}{{cutoff .ShortDesc 40 }}{{end}}
+	⠙ {{toLower .Name }}        {{if isEmpty .ShortDesc }}{{cutoff .Desc 100 }}{{else}}{{cutoff .ShortDesc 100 }}{{end}}
 {{end}}
-
 ⡿ HELP:
 	Run [command] help
 
 ⡿ OTHERS:
-	Run '{{toLower .Title}} printflags' to print all flags of all commands.
+	Run '{{toLower .Title}} flags' to print all flags of all commands.
 
 ⡿ WARNING:
 	Uses internal flag package so flags must precede command name. 
@@ -42,14 +41,18 @@ const (
 
 ⡿ Flags:
 	{{$title := toLower .Title}}{{$cmdName := .Cmd.Name}}{{ range $_, $fl := .Cmd.Flags }}
-	⠙ {{toLower $cmdName}}.{{toLower $fl.FlagName}}		Default: {{.Default}}	Desc: {{.Desc }}
+	⠙ {{toLower $cmdName}}.{{toLower $fl.FlagName}}
+	 Default: {{.Default}}
+	 Desc: {{.Desc }}
 	{{end}}
-
+⡿ Examples:
+	{{ range $_, $content := .Cmd.Usages }}
+	⠙ {{$content}}
+	{{end}}
 ⡿ USAGE:
 	{{ range $_, $fl := .Cmd.Flags }}
 	⠙ {{$title}} -{{toLower $cmdName}}.{{toLower $fl.FlagName}}={{.Default}} {{toLower $cmdName}} 
 	{{end}}
-
 ⡿ OTHERS:
 	Commands which respect context.Context, can set timeout by using the -timeout flag.
 	e.g -timeout=4m, -timeout=4h
@@ -398,6 +401,28 @@ func (s *StringFlag) Parse(cmd string) error {
 type Context interface {
 	bag.Getter
 	context.Context
+	PrintHelp()
+	Args() []string
+}
+
+type ctxImpl struct {
+	bag.Getter
+	context.Context
+	args      []string
+	printhelp func()
+}
+
+// PrintHelp calls underline function to print help for command.
+func (c ctxImpl) PrintHelp() {
+	if c.printhelp != nil {
+		c.printhelp()
+	}
+}
+
+// Args returning the internal associated arg list.
+// It implements the Context interface.
+func (c ctxImpl) Args() []string {
+	return c.args
 }
 
 // Action defines a giving function to be executed for a Command.
@@ -405,12 +430,22 @@ type Action func(Context) error
 
 // Command defines structures which define specific actions to be executed
 // with associated flags.
+// Commands provided will have their ShortDesc trimmed to 100 in length, so
+// ensure to have what you wanna say fit 100 and put more detail explanations
+// in Desc field.
 type Command struct {
-	Name        string
-	Desc        string
-	ShortDesc   string
-	Flags       []Flag
-	Action      Action
+	Name      string
+	Desc      string
+	ShortDesc string
+	Flags     []Flag
+	Action    Action
+	Usages    []string
+
+	// AllowDefault is used when only one command is provided to flags, and we want it
+	// to be executable as default action when binary is called.
+	AllowDefault bool
+
+	// @Deprecated
 	WaitOnCtrlC bool
 }
 
@@ -464,10 +499,24 @@ func Run(title string, cmds ...Command) {
 
 	command := strings.ToLower(flag.Arg(0))
 	subCommand := strings.ToLower(flag.Arg(1))
-	if command == "printflags" {
+
+	if command == "flags" {
 		flag.PrintDefaults()
 		return
 	}
+
+	args := flag.Args()
+
+	var cancel func()
+	var ctx context.Context
+
+	if *timeout != 0 {
+		ctx, cancel = context.WithTimeout(context.Background(), *timeout)
+	} else {
+		ctx, cancel = context.WithCancel(context.Background())
+	}
+
+	defer cancel()
 
 	var cmd Command
 	var found bool
@@ -479,10 +528,30 @@ func Run(title string, cmds ...Command) {
 	}
 
 	if !found {
-		if flag.Usage != nil {
-			flag.Usage()
+		//if len(cmds) != 0 {
+		//	if flag.Usage != nil {
+		//		flag.Usage()
+		//		return
+		//	}
+		//}
+
+		// If commands contains only one, then attempt to run the available command instead if it
+		// sets AllowDefault to true.
+		first := cmds[0]
+		if !first.AllowDefault {
+			if flag.Usage != nil {
+				flag.Usage()
+			}
+			return
 		}
-		return
+
+		cmd = first
+	}
+
+	if flag.NArg() > 1 {
+		args = args[1:]
+	} else {
+		args = nil
 	}
 
 	if subCommand == "help" {
@@ -490,28 +559,13 @@ func Run(title string, cmds ...Command) {
 		return
 	}
 
-	var cancler func()
-	var ctx context.Context
-
-	if *timeout != 0 {
-		ctx, cancler = context.WithTimeout(ctx, *timeout)
-	} else {
-		ctx = context.Background()
-	}
-
-	if cancler != nil {
-		defer cancler()
-	}
-
 	for _, flag := range cmd.Flags {
 		ctx = context.WithValue(ctx, flag.FlagName(), flag.Value())
 	}
 
-	if !cmd.WaitOnCtrlC {
-		if err := cmd.Action(bag.FromContext(ctx)); err != nil {
-			fmt.Fprint(os.Stderr, err.Error())
-		}
-		return
+	ctxx := ctxImpl{Getter: bag.FromContext(ctx), Context: ctx, args: args}
+	ctxx.printhelp = func() {
+		fmt.Println(commandHelp[cmd.Name])
 	}
 
 	ch := make(chan os.Signal, 3)
@@ -520,9 +574,10 @@ func Run(title string, cmds ...Command) {
 	signal.Notify(ch, syscall.SIGTERM)
 
 	go func() {
-		if err := cmd.Action(bag.FromContext(ctx)); err != nil {
+		defer close(ch)
+		if err := cmd.Action(ctxx); err != nil {
 			fmt.Fprint(os.Stderr, err.Error())
-			close(ch)
+			return
 		}
 	}()
 

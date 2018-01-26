@@ -34,8 +34,9 @@ var (
 	// we need to ensure we catch all processed packages to ensure we dont get stuck
 	// re-processing in a loop again.
 	processedPackages = struct {
-		pl   sync.Mutex
-		pkgs map[string]Package
+		pl         sync.Mutex
+		pkgs       map[string]Package
+		processing map[string]struct{}
 	}{
 		pkgs: make(map[string]Package),
 	}
@@ -132,11 +133,6 @@ func FilteredPackageWithBuildCtx(log metrics.Metrics, dir string, ctx build.Cont
 				log.Emit(metrics.Error(err), metrics.With("message", "Failed to parse file"), metrics.With("dir", dir), metrics.With("file", file.Name.Name), metrics.With("Package", pkg.Name))
 				return nil, err
 			}
-
-			//if err := res.loadImported(log); err != nil {
-			//	log.Emit(metrics.Error(err), metrics.With("message", "Failed to load imported pacakges"), metrics.With("dir", dir), metrics.With("file", file.Name.Name), metrics.With("Package", pkg.Name))
-			//	return nil, err
-			//}
 
 			log.Emit(metrics.Info("Parsed Package File"), metrics.With("dir", dir), metrics.With("file", file.Name.Name), metrics.With("path", path), metrics.With("Package", pkg.Name))
 
@@ -392,9 +388,14 @@ func parseFileToPackage(log metrics.Metrics, dir string, path string, pkgName st
 		packageDeclr.Dir = dir
 		packageDeclr.FilePath = path
 		packageDeclr.Source = string(pkgSource)
-		packageDeclr.ImportedPackages = make(map[string]Packages)
+		packageDeclr.ImportedPackages = make(map[string]Package)
 		packageDeclr.Imports = make(map[string]ImportDeclaration, 0)
 		packageDeclr.ObjectFunc = make(map[*ast.Object][]FuncDeclaration, 0)
+
+		if relPath, err := relativeToSrc(path); err == nil {
+			packageDeclr.Path = filepath.Dir(relPath)
+			packageDeclr.File = filepath.Base(relPath)
+		}
 
 		if file.Doc != nil {
 			for _, comment := range file.Doc.List {
@@ -403,6 +404,7 @@ func parseFileToPackage(log metrics.Metrics, dir string, path string, pkgName st
 		}
 
 		for _, imp := range file.Imports {
+
 			beginPosition, endPosition := tokenFiles.Position(imp.Pos()), tokenFiles.Position(imp.End())
 			positionLength := endPosition.Offset - beginPosition.Offset
 			source, err := readSourceIn(beginPosition.Filename, int64(beginPosition.Offset), positionLength)
@@ -413,6 +415,10 @@ func parseFileToPackage(log metrics.Metrics, dir string, path string, pkgName st
 
 			var pkgName string
 			if imp.Name != nil {
+				if imp.Name.Name == "_" {
+					continue
+				}
+
 				pkgName = strings.Replace(imp.Name.Name, "/", "", -1)
 			} else {
 				pkgName = strings.Replace(filepath.Base(imp.Path.Value), "\"", "", -1)
@@ -425,6 +431,10 @@ func parseFileToPackage(log metrics.Metrics, dir string, path string, pkgName st
 			impPkgPath, err := strconv.Unquote(imp.Path.Value)
 			if err != nil {
 				impPkgPath = imp.Path.Value
+			}
+
+			if impPkgPath == packageDeclr.Path {
+				continue
 			}
 
 			var comment string
@@ -463,7 +473,7 @@ func parseFileToPackage(log metrics.Metrics, dir string, path string, pkgName st
 					res, ok := processedPackages.pkgs[uniqueImportDir]
 					processedPackages.pl.Unlock()
 					if ok {
-						packageDeclr.ImportedPackages[imported.Path] = Packages{res}
+						packageDeclr.ImportedPackages[imported.Path] = res
 					} else {
 						imps, err := PackageWithBuildCtx(log, importDir, build.Default)
 						if err != nil {
@@ -474,18 +484,13 @@ func parseFileToPackage(log metrics.Metrics, dir string, path string, pkgName st
 						for _, imppkg := range imps {
 							imppath := imppkg.Dir + "#" + imported.Name
 							processedPackages.pkgs[imppath] = imppkg
+							packageDeclr.ImportedPackages[imppkg.Path] = imppkg
 						}
 						processedPackages.pl.Unlock()
 
-						packageDeclr.ImportedPackages[imported.Path] = imps
 					}
 				}
 			}
-		}
-
-		if relPath, err := relativeToSrc(path); err == nil {
-			packageDeclr.Path = filepath.Dir(relPath)
-			packageDeclr.File = filepath.Base(relPath)
 		}
 
 		if runtime.GOOS == "windows" {
@@ -573,6 +578,7 @@ func parseFileToPackage(log metrics.Metrics, dir string, path string, pkgName st
 				defFunc.File = packageDeclr.File
 				defFunc.Declr = &packageDeclr
 				defFunc.FuncName = rdeclr.Name.Name
+				defFunc.FuncNameWithPackage = fmt.Sprintf("%s.%s", packageDeclr.Package, rdeclr.Name.Name)
 				defFunc.Length = positionLength
 				defFunc.From = beginPosition.Offset
 				defFunc.Package = packageDeclr.Package
@@ -668,20 +674,34 @@ func parseFileToPackage(log metrics.Metrics, dir string, path string, pkgName st
 						// i.e Spec:
 						// &ast.ValueSpec{Doc:(*ast.CommentGroup)(nil), Names:[]*ast.Ident{(*ast.Ident)(0xc4200e4a00)}, Type:ast.Expr(nil), Values:[]ast.Expr{(*ast.BasicLit)(0xc4200e4a20)}, Comment:(*ast.CommentGroup)(nil)}
 						// &ast.ValueSpec{Doc:(*ast.CommentGroup)(nil), Names:[]*ast.Ident{(*ast.Ident)(0xc4200e4a40)}, Type:(*ast.Ident)(0xc4200e4a60), Values:[]ast.Expr(nil), Comment:(*ast.CommentGroup)(nil)}
+
+						var name string
+						var nameWithPackage string
+						var nameIdent *ast.Ident
+
+						if len(obj.Names) != 0 {
+							nameIdent = obj.Names[0]
+							name = nameIdent.Name
+							nameWithPackage = fmt.Sprintf("%s.%s", packageDeclr.Package, name)
+						}
+
 						packageDeclr.Variables = append(packageDeclr.Variables, VariableDeclaration{
-							Object:       obj,
-							Annotations:  annotations,
-							Associations: associations,
-							GenObj:       rdeclr,
-							Source:       string(source),
-							Comments:     comment,
-							Declr:        &packageDeclr,
-							File:         packageDeclr.File,
-							Package:      packageDeclr.Package,
-							Path:         packageDeclr.Path,
-							FilePath:     packageDeclr.FilePath,
-							From:         beginPosition.Offset,
-							Length:       positionLength,
+							Object:          obj,
+							Name:            name,
+							NameIdent:       nameIdent,
+							NameWithPackage: nameWithPackage,
+							Annotations:     annotations,
+							Associations:    associations,
+							GenObj:          rdeclr,
+							Source:          string(source),
+							Comments:        comment,
+							Declr:           &packageDeclr,
+							File:            packageDeclr.File,
+							Package:         packageDeclr.Package,
+							Path:            packageDeclr.Path,
+							FilePath:        packageDeclr.FilePath,
+							From:            beginPosition.Offset,
+							Length:          positionLength,
 						})
 
 					case *ast.TypeSpec:
@@ -695,20 +715,22 @@ func parseFileToPackage(log metrics.Metrics, dir string, path string, pkgName st
 								metrics.With("StructName", obj.Name.Name))
 
 							packageDeclr.Structs = append(packageDeclr.Structs, StructDeclaration{
-								Object:       obj,
-								Struct:       robj,
-								Annotations:  annotations,
-								Associations: associations,
-								GenObj:       rdeclr,
-								Source:       string(source),
-								Comments:     comment,
-								Declr:        &packageDeclr,
-								File:         packageDeclr.File,
-								Package:      packageDeclr.Package,
-								Path:         packageDeclr.Path,
-								FilePath:     packageDeclr.FilePath,
-								From:         beginPosition.Offset,
-								Length:       positionLength,
+								Object:          obj,
+								Struct:          robj,
+								Name:            obj.Name.Name,
+								NameWithPackage: fmt.Sprintf("%s.%s", packageDeclr.Package, obj.Name.Name),
+								Annotations:     annotations,
+								Associations:    associations,
+								GenObj:          rdeclr,
+								Source:          string(source),
+								Comments:        comment,
+								Declr:           &packageDeclr,
+								File:            packageDeclr.File,
+								Package:         packageDeclr.Package,
+								Path:            packageDeclr.Path,
+								FilePath:        packageDeclr.FilePath,
+								From:            beginPosition.Offset,
+								Length:          positionLength,
 							})
 
 						case *ast.InterfaceType:
@@ -718,20 +740,22 @@ func parseFileToPackage(log metrics.Metrics, dir string, path string, pkgName st
 								metrics.With("StructName", obj.Name.Name))
 
 							packageDeclr.Interfaces = append(packageDeclr.Interfaces, InterfaceDeclaration{
-								Object:       obj,
-								Interface:    robj,
-								GenObj:       rdeclr,
-								Comments:     comment,
-								Annotations:  annotations,
-								Associations: associations,
-								Declr:        &packageDeclr,
-								Source:       string(source),
-								File:         packageDeclr.File,
-								Package:      packageDeclr.Package,
-								Path:         packageDeclr.Path,
-								FilePath:     packageDeclr.FilePath,
-								From:         beginPosition.Offset,
-								Length:       positionLength,
+								Object:          obj,
+								Interface:       robj,
+								GenObj:          rdeclr,
+								Name:            obj.Name.Name,
+								NameWithPackage: fmt.Sprintf("%s.%s", packageDeclr.Package, obj.Name.Name),
+								Comments:        comment,
+								Annotations:     annotations,
+								Associations:    associations,
+								Declr:           &packageDeclr,
+								Source:          string(source),
+								File:            packageDeclr.File,
+								Package:         packageDeclr.Package,
+								Path:            packageDeclr.Path,
+								FilePath:        packageDeclr.FilePath,
+								From:            beginPosition.Offset,
+								Length:          positionLength,
 							})
 
 						default:
@@ -785,6 +809,8 @@ func parseFileToPackage(log metrics.Metrics, dir string, path string, pkgName st
 								Object:          obj,
 								GenObj:          rdeclr,
 								Annotations:     annotations,
+								Name:            obj.Name.Name,
+								NameWithPackage: fmt.Sprintf("%s.%s", packageDeclr.Package, obj.Name.Name),
 								Comments:        comment,
 								TypeInfo:        argType,
 								Type:            mainType,
