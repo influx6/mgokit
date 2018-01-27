@@ -55,8 +55,8 @@ type MongoDB interface {
 }
 
 // NewMongoDB returns a new instance of a MongoDB.
-func NewMongoDB(conf Config) MongoDB {
-	mg := &mongoDB{
+func NewMongoDB(conf Config) *MongoDBImpl {
+	mg := &MongoDBImpl{
 		Config: conf,
 	}
 
@@ -73,10 +73,10 @@ func NewMongoDB(conf Config) MongoDB {
 	return mg
 }
 
-// mongoDB defines a mongo connection manager that builds
+// MongoDBImpl defines a mongo connection manager that builds
 // allows usage of a giving configuration to generate new mongo
 // sessions and database instances.
-type mongoDB struct {
+type MongoDBImpl struct {
 	Config
 	ml     sync.Mutex
 	master *mgo.Session
@@ -94,7 +94,7 @@ type mongoDB struct {
 // 2. If `isread` is true, then session is copied which creates a new unique session which you
 // should close after use, this lets you handle large reads that may contain complicated queries.
 //
-func (m *mongoDB) New(isread bool) (*mgo.Database, *mgo.Session, error) {
+func (m *MongoDBImpl) New(isread bool) (*mgo.Database, *mgo.Session, error) {
 	m.ml.Lock()
 	defer m.ml.Unlock()
 
