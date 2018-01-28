@@ -61,12 +61,12 @@ func NewMongoDB(conf Config) *MongoDBImpl {
 	}
 
 	// Add finalizer to ensure closure of master session.
-	runtime.SetFinalizer(mg, func() {
-		mg.ml.Lock()
-		defer mg.ml.Unlock()
-		if mg.master != nil {
-			mg.master.Close()
-			mg.master = nil
+	runtime.SetFinalizer(mg, func(target *MongoDBImpl) {
+		target.ml.Lock()
+		defer target.ml.Unlock()
+		if target.master != nil {
+			target.master.Close()
+			target.master = nil
 		}
 	})
 
@@ -99,8 +99,10 @@ func (m *MongoDBImpl) New(isread bool) (*mgo.Database, *mgo.Session, error) {
 	defer m.ml.Unlock()
 
 	// if m.master is alive then continue else, reset as empty.
-	if err := m.master.Ping(); err != nil {
-		m.master = nil
+	if m.master != nil {
+		if err := m.master.Ping(); err != nil {
+			m.master = nil
+		}
 	}
 
 	ses, err := getSession(m.Config)
